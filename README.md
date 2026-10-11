@@ -20,8 +20,9 @@ OpenSpiel runtime installed. Add this repository root to `load-path`:
 (etaf-xiangqi-open)
 ```
 
-Red moves first. Click a stone, then a highlighted point; or press one of the
-legal moves listed beside the board. `U`/`Y` undo and redo, `N` starts a new
+Red moves first. Click a circular stone, then a marked intersection. Arrow
+keys and Enter follow the same input path. **走法** opens an optional legal-move
+list; the board remains the main surface. `U`/`Y` undo and redo, `N` starts a new
 match, `T` switches between the paper and night palettes, `F1` opens the help
 dialog and `Q` closes the match. Both palettes are supported; the theme switch
 never resets the match.

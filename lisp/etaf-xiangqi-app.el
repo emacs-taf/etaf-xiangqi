@@ -24,7 +24,10 @@
                     :options (list :seed (or seed (random most-positive-fixnum)))))
          (buffer (etaf-gamekit-buffer session)))
     (with-current-buffer buffer
-      (setq-local etaf-xiangqi--session session))
+      (setq-local etaf-xiangqi--session session cursor-type nil mode-line-format nil
+                  truncate-lines t
+                  buffer-display-table (copy-sequence (or standard-display-table (make-display-table))))
+      (set-display-table-slot buffer-display-table 'truncation ?\s))
     (switch-to-buffer buffer)
     (etaf-refit (etaf-runtime-for-buffer buffer) (selected-window))
     session))

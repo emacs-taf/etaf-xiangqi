@@ -2,8 +2,8 @@
 .NOTPARALLEL:
 EMACS ?= emacs
 PROVIDER_ROOT ?= $(if $(wildcard ../etaf/etaf.el),..,../..)
-LOAD_PATH = -L . -L lisp -L $(PROVIDER_ROOT)/etaf-gamekit -L $(PROVIDER_ROOT)/etaf-ui -L $(PROVIDER_ROOT)/etaf -L $(PROVIDER_ROOT)/ebox -L $(PROVIDER_ROOT)/ecss
-SOURCES = lisp/etaf-xiangqi-theme.el lisp/etaf-xiangqi-model.el lisp/etaf-xiangqi-views.el lisp/etaf-xiangqi-app.el etaf-xiangqi.el tests/etaf-xiangqi-tests.el
+LOAD_PATH = -L . -L lisp -L $(PROVIDER_ROOT)/etaf-gamekit -L $(PROVIDER_ROOT)/etaf-ui -L $(PROVIDER_ROOT)/etaf -L $(PROVIDER_ROOT)/ebox -L $(PROVIDER_ROOT)/ecss -L $(PROVIDER_ROOT)/etaf/scripts
+SOURCES = lisp/etaf-xiangqi-theme.el lisp/etaf-xiangqi-model.el lisp/etaf-xiangqi-board.el lisp/etaf-xiangqi-views.el lisp/etaf-xiangqi-app.el etaf-xiangqi.el tests/etaf-xiangqi-tests.el benchmarks/performance-scenarios.el scripts/etaf-xiangqi-gui-scenarios.el
 
 .PHONY: compile test check clean structure-check setup-hooks acceptance api-check
 compile: clean
@@ -17,6 +17,6 @@ api-check:
 test: acceptance
 check: structure-check compile acceptance api-check
 clean:
-	rm -f *.elc lisp/*.elc tests/*.elc
+	rm -f *.elc lisp/*.elc tests/*.elc benchmarks/*.elc scripts/*.elc
 setup-hooks:
 	git config --local core.hooksPath .githooks

@@ -11,6 +11,11 @@
   "support": [],
   "cases": [
     {
+      "name": "etaf-xiangqi-dialog-and-escape-dismiss-one-layer",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "Escape closes help before clearing the selected stone, preserving the native match."
+    },
+    {
       "name": "etaf-xiangqi-hot-seat-moves-and-undo-restores",
       "file": "tests/etaf-xiangqi-tests.el",
       "purpose": "Red and black alternate through the public board and undo restores the opening."

@@ -6,8 +6,9 @@
 ;; Package-Requires: ((emacs "29.1") (etaf-gamekit "0.1.0") (etaf-ui "0.1.0"))
 ;;; Commentary:
 ;; Chu He presents OpenSpiel's xiangqi rules on a native ETAF board with both
-;; palettes and a hot-seat turn. Piece glyphs, selection and move hints are
-;; presentation only; legality, check and history stay in OpenSpiel.
+;; palettes and a hot-seat turn. Graphical displays use vector intersections
+;; and circular stones; terminals keep text cells. Artwork, selection and
+;; move hints are presentation only; legality and history stay in OpenSpiel.
 ;;
 ;; Variable: etaf-xiangqi-game
 ;; Inert game definition usable with etaf-gamekit-start. Each instance owns an
