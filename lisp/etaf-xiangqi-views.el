@@ -27,36 +27,57 @@
     :on-press (lambda () (setf (etaf-value appearance)
                               (if (eq (etaf-value appearance) 'dark) 'light 'dark)))))
 
+(defun etaf-xiangqi--cell-bg (table selected row column)
+  "Return the disc background for ROW/COLUMN under SELECTED."
+  (let* ((coord (etaf-xiangqi--coord row column))
+         (piece (etaf-xiangqi--cell table row column))
+         (target (member coord (etaf-xiangqi--targets table (etaf-value selected)))))
+    (cond
+     ((and piece (equal coord (etaf-value selected))) (etaf-xiangqi--color :xiangqi-selected-bg))
+     (target (etaf-xiangqi--color :xiangqi-target-bg))
+     ((eq (etaf-xiangqi--side piece) 'red) (etaf-xiangqi--color :xiangqi-red-disc))
+     ((eq (etaf-xiangqi--side piece) 'black) (etaf-xiangqi--color :xiangqi-black-disc))
+     (t (etaf-xiangqi--color :xiangqi-board-bg)))))
+
+(defun etaf-xiangqi--cell-ink (table selected row column)
+  "Return the glyph ink for ROW/COLUMN under SELECTED."
+  (let* ((coord (etaf-xiangqi--coord row column))
+         (piece (etaf-xiangqi--cell table row column)))
+    (cond
+     ((and piece (equal coord (etaf-value selected))) (etaf-xiangqi--color :xiangqi-selected-ink))
+     ((eq (etaf-xiangqi--side piece) 'red) (etaf-xiangqi--color :xiangqi-red-ink))
+     ((eq (etaf-xiangqi--side piece) 'black) (etaf-xiangqi--color :xiangqi-black-ink))
+     (t (etaf-xiangqi--color :xiangqi-river-fg)))))
+
 (etaf-define-component etaf-xiangqi--board (&key session table selected)
   :view
-  (etaf-tile-grid :rows 10 :columns 9 :cell-width 4 :ref 'xiangqi-board
-    :cell-ref (lambda (r c) (intern (format "xiangqi-cell-%d-%d" r c)))
-    :cell-text (lambda (r c) (or (etaf-xiangqi--glyph (etaf-xiangqi--cell (etaf-value table) r c)) " "))
-    :cell-color (lambda (r c)
-                  (pcase (etaf-xiangqi--side (etaf-xiangqi--cell (etaf-value table) r c))
-                    ('red (etaf-xiangqi--color :xiangqi-red))
-                    ('black (etaf-xiangqi--color :xiangqi-black))
-                    (_ (etaf-xiangqi--color :ui-muted-fg))))
-    :cell-background
-    (lambda (r c)
-      (let* ((coord (etaf-xiangqi--coord r c))
-             (target-p (member coord (etaf-xiangqi--targets (etaf-value table) (etaf-value selected)))))
-        (cond
-         ((equal coord (etaf-value selected)) (etaf-xiangqi--color :xiangqi-selected-bg))
-         (target-p (etaf-xiangqi--color :xiangqi-target-bg))
-         ((and (>= r 4) (<= r 5)) (etaf-xiangqi--color :xiangqi-river-bg))
-         ((etaf-xiangqi--palace-p r c) (etaf-xiangqi--color :xiangqi-palace-bg))
-         ((cl-evenp (+ r c)) (etaf-xiangqi--color :xiangqi-board-bg))
-         (t (etaf-xiangqi--color :xiangqi-board-alt-bg)))))
-    :cell-label
-    (lambda (r c)
-      (let* ((coord (etaf-xiangqi--coord r c))
-             (piece (etaf-xiangqi--cell (etaf-value table) r c))
-             (target-p (member coord (etaf-xiangqi--targets (etaf-value table) (etaf-value selected)))))
-        (format "%s · %s%d%s" (if piece (etaf-xiangqi--name piece) "空")
-                (if (< r 5) "黑" "红") (- 10 r) (if target-p " · 可走" ""))))
-    :on-cell-press
-    (lambda (r c) (etaf-xiangqi--press session selected (etaf-value table) (etaf-xiangqi--coord r c)))))
+  (column :ref 'xiangqi-board :width '(ch 39) :padding '((lh 0) (ch 2))
+          :background-color (etaf-xiangqi--color :xiangqi-board-bg)
+          :border-radius '(px 14) :item-gap '(lh 0)
+          :focus-group 'grid :role 'region :aria-label "棋盘"
+    (row :for (r (number-sequence 0 4)) :key r :item-gap '(ch 1)
+      (box :for (c (number-sequence 0 8)) :key c
+        :ref (intern (format "xiangqi-cell-%d-%d" r c))
+        :width '(ch 3) :height '(lh 1) :text-align 'center :border-radius '(px 14)
+        :background-color (etaf-xiangqi--cell-bg (etaf-value table) selected r c)
+        :color (etaf-xiangqi--cell-ink (etaf-value table) selected r c)
+        :role 'button :on-press (lambda () (etaf-xiangqi--press session selected (etaf-value table)
+                                                      (etaf-xiangqi--coord r c)))
+        :aria-label (or (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) r c)) "空位")
+        (expr (or (etaf-xiangqi--glyph (etaf-xiangqi--cell (etaf-value table) r c)) " "))))
+    (flex :width '(ch 35) :justify-content 'space-between :align-items 'center :padding '((lh 0) (ch 1))
+      (etaf-label :text "楚 河" :variant 'muted :color (etaf-xiangqi--color :xiangqi-river-fg))
+      (etaf-label :text "汉 界" :variant 'muted :color (etaf-xiangqi--color :xiangqi-river-fg)))
+    (row :for (r (number-sequence 5 9)) :key r :item-gap '(ch 1)
+      (box :for (c (number-sequence 0 8)) :key c
+        :ref (intern (format "xiangqi-cell-%d-%d" r c))
+        :width '(ch 3) :height '(lh 1) :text-align 'center :border-radius '(px 14)
+        :background-color (etaf-xiangqi--cell-bg (etaf-value table) selected r c)
+        :color (etaf-xiangqi--cell-ink (etaf-value table) selected r c)
+        :role 'button :on-press (lambda () (etaf-xiangqi--press session selected (etaf-value table)
+                                                      (etaf-xiangqi--coord r c)))
+        :aria-label (or (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) r c)) "空位")
+        (expr (or (etaf-xiangqi--glyph (etaf-xiangqi--cell (etaf-value table) r c)) " "))))))
 
 (etaf-define-component etaf-xiangqi--moves (&key session table selected)
   :bindings ((moves (etaf-computed
@@ -105,6 +126,7 @@
                         (lambda () (let ((size (etaf-viewport)))
                                      (cons (or (car size) 1024) (or (cdr size) 50)))) :test #'equal))
              (wide (etaf-computed (lambda () (>= (car (etaf-value viewport)) (* 86 (frame-char-width))))))
+             (roomy (etaf-computed (lambda () (>= (cdr (etaf-value viewport)) 40))))
              (compact (etaf-computed (lambda () (< (cdr (etaf-value viewport)) 28)))))
   :setup (progn
            (etaf-theme-provide theme)
@@ -119,7 +141,8 @@
                   (etaf-gamekit-action session "set-player" (list :player (plist-get view :current_player))))))
             :name "xiangqi-player-sync"))
   :view
-  (column :width '(vw 100) :height '(vh 100) :cross-align 'center
+  (flex :flex-direction 'column :width '(vw 100) :height '(vh 100)
+    :justify-content (if (etaf-value roomy) 'center 'flex-start) :align-items 'center
     :background-color (etaf-xiangqi--color :ui-bg) :color (etaf-xiangqi--color :ui-fg)
     :on-dismiss (lambda () (when (etaf-value selected) (setf (etaf-value selected) nil)))
     :keys (list
@@ -158,10 +181,9 @@
       (etaf-label :if (not (etaf-value compact)) :text "OpenSpiel 规则 · 红方先行 · 同机双人对弈" :variant 'muted)
       (etaf-divider)
       (etaf-label :if (null (etaf-value table)) :text "正在开局…" :variant 'muted)
-      (flex :if (etaf-value table) :width 'stretch :gap '((lh 0) (ch 3))
+      (flex :if (etaf-value table) :width 'stretch :gap '((lh 0) (ch 2))
         :justify-content (if (etaf-value wide) 'flex-start 'center) :align-items 'flex-start
-        (column :width '(ch 36)
-          (etaf-xiangqi--board :session session :table table :selected selected))
+        (etaf-xiangqi--board :session session :table table :selected selected)
         (etaf-xiangqi--moves :if (etaf-value wide) :session session :table table :selected selected))
       (flex :width 'stretch :justify-content 'space-between
         (etaf-label :ref 'xiangqi-status
@@ -175,7 +197,7 @@
           :variant 'muted)
         (etaf-button :if (and (etaf-value table) (not (etaf-value wide))) :label "棋谱" :ref 'xiangqi-show-moves
           :variant 'secondary :on-press (lambda () (setf (etaf-value moves-open) t))))
-      (etaf-label :text "点选棋子 → 点击高亮目标 · Tab / 方向键导航，Enter 确认" :variant 'muted)
+      (etaf-label :text "点击圆子选棋，再点高亮目标 · Tab / 方向键移动焦点，Enter 确认" :variant 'muted)
       (etaf-alert :if (etaf-gamekit-last-error session) :title "走法未生效"
         :message (etaf-gamekit-last-error session) :variant 'danger)
       (etaf-dialog :open (and (etaf-value table) (not (etaf-value wide)) (etaf-value moves-open))

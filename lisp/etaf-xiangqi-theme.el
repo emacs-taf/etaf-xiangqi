@@ -17,11 +17,15 @@
     :ui-warning-bg "#F7EFD8" :ui-warning-fg "#8B6E2E" :ui-warning-border "#E7D9B4"
     :ui-danger-bg "#F9E7E4" :ui-danger-fg "#A63B34" :ui-danger-border "#EACBC6"
     :ui-progress-track "#E8E1D4"
-    :xiangqi-board-bg "#EFE3C8" :xiangqi-board-alt-bg "#E9DBBC"
-    :xiangqi-river-bg "#E0CEA8" :xiangqi-palace-bg "#E8D6B2"
-    :xiangqi-red "#B2352C" :xiangqi-black "#2A2F36"
+    :xiangqi-board-bg "#E7D9BC" :xiangqi-board-alt-bg "#E2D3B4"
+    :xiangqi-river-bg "#DECBA4" :xiangqi-palace-bg "#E1D0AA"
+    :xiangqi-stone-bg "#F7F0DF" :xiangqi-river-fg "#8C7345"
+    :xiangqi-red "#AE3529" :xiangqi-black "#28303A"
+    :xiangqi-red-disc "#B2352C" :xiangqi-red-ink "#FFF6F3"
+    :xiangqi-black-disc "#2A3038" :xiangqi-black-ink "#F2F5F8"
     :xiangqi-red-bg "#F1CFC9" :xiangqi-black-bg "#D3D9DF"
-    :xiangqi-selected-bg "#F3D488" :xiangqi-target-bg "#BFDCC4"
+    :xiangqi-selected-bg "#EEC775" :xiangqi-selected-ink "#3A2C0C"
+    :xiangqi-target-bg "#A3CFAE"
     :xiangqi-last-bg "#E3C79F")
   "Paper and cinnabar palette for the Chu He board; it does not alter Emacs.")
 
@@ -38,11 +42,15 @@
     :ui-warning-bg "#3E352C" :ui-warning-fg "#E0CA96" :ui-warning-border "#5C503E"
     :ui-danger-bg "#402A2E" :ui-danger-fg "#F0A0A0" :ui-danger-border "#69414A"
     :ui-progress-track "#333B47"
-    :xiangqi-board-bg "#2A313C" :xiangqi-board-alt-bg "#262D37"
-    :xiangqi-river-bg "#1F262F" :xiangqi-palace-bg "#2F2A38"
-    :xiangqi-red "#E4695E" :xiangqi-black "#C9D4DF"
+    :xiangqi-board-bg "#232A34" :xiangqi-board-alt-bg "#20262F"
+    :xiangqi-river-bg "#1D242D" :xiangqi-palace-bg "#28313C"
+    :xiangqi-stone-bg "#313B47" :xiangqi-river-fg "#8A97A6"
+    :xiangqi-red "#E4695E" :xiangqi-black "#D5DEE8"
+    :xiangqi-red-disc "#C0564E" :xiangqi-red-ink "#FFF3F1"
+    :xiangqi-black-disc "#4A5A6C" :xiangqi-black-ink "#F1F5FA"
     :xiangqi-red-bg "#473034" :xiangqi-black-bg "#37414D"
-    :xiangqi-selected-bg "#5A4620" :xiangqi-target-bg "#2F5D46"
+    :xiangqi-selected-bg "#D8B454" :xiangqi-selected-ink "#2E2408"
+    :xiangqi-target-bg "#3E7A57"
     :xiangqi-last-bg "#3A4150")
   "Night-aubergine palette with clear red and black stone contrasts.")
 
