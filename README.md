@@ -1,7 +1,7 @@
 # Chu He · 中国象棋
 
 Chinese chess (xiangqi) with a native ETAF board and the OpenSpiel rule engine,
-built as an independent [GameKit](https://forgejo.vhkd.top/emacs-taf/etaf-gamekit)
+built as an independent [GameKit](https://github.com/emacs-taf/etaf-gamekit)
 application. Two players alternate hot-seat in one window: pick a stone, click a
 highlighted point, and the bridge hands the turn to the other side.
 
@@ -35,12 +35,12 @@ re-implements a move.
 ## Installation
 
 ```sh
-git clone https://forgejo.vhkd.top/emacs-taf/ecss.git
-git clone https://forgejo.vhkd.top/emacs-taf/ebox.git
-git clone https://forgejo.vhkd.top/emacs-taf/etaf.git
-git clone https://forgejo.vhkd.top/emacs-taf/etaf-ui.git
-git clone https://forgejo.vhkd.top/emacs-taf/etaf-gamekit.git
-git clone https://forgejo.vhkd.top/emacs-taf/etaf-xiangqi.git
+git clone https://github.com/emacs-taf/ecss.git
+git clone https://github.com/emacs-taf/ebox.git
+git clone https://github.com/emacs-taf/etaf.git
+git clone https://github.com/emacs-taf/etaf-ui.git
+git clone https://github.com/emacs-taf/etaf-gamekit.git
+git clone https://github.com/emacs-taf/etaf-xiangqi.git
 make -C etaf-gamekit engine-openspiel GAMEKIT_PYTHON=python3.11
 ```
 
@@ -94,7 +94,7 @@ separately.
 - [Chu He manual](docs/manual.md) — the board, window adaptation and GUI
   acceptance.
 - [Package entry](etaf-xiangqi.el) — the supported API inventory.
-- [GameKit](https://forgejo.vhkd.top/emacs-taf/etaf-gamekit) — the shared game
+- [GameKit](https://github.com/emacs-taf/etaf-gamekit) — the shared game
   framework, its adapters and backend installation.
 
 ## License
