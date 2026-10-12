@@ -1,32 +1,102 @@
 # Chu He · 中国象棋
 
-Chinese chess (xiangqi) with a native ETAF board and the OpenSpiel rule
-engine. Two players alternate hot-seat in one window: pick a stone, click a
-highlighted point, and the bridge hands the turn to the other side. Legality,
-check and history live in OpenSpiel; the application owns the board, both
-palettes, selection and the move list.
+Chinese chess (xiangqi) with a native ETAF board and the OpenSpiel rule engine,
+built as an independent [GameKit](https://forgejo.vhkd.top/emacs-taf/etaf-gamekit)
+application. Two players alternate hot-seat in one window: pick a stone, click a
+highlighted point, and the bridge hands the turn to the other side.
 
-This is an independent application. Its presentation, themes, tests and
-launcher live here. GameKit supplies only the shared game instance and backend
-connection.
+OpenSpiel owns legality, check, repetition and history; this application owns
+the board, both palettes, selection, the move list and the launcher. It never
+re-implements a move.
 
-## Install and play
+![The board in the paper light theme](examples/screenshot-light.png)
 
-Requires Emacs 29.1+, GameKit, ETAF and etaf-ui on `load-path`, and GameKit's
-OpenSpiel runtime installed. Add this repository root to `load-path`:
+![The same match in the night dark theme](examples/screenshot-dark.png)
 
-```elisp
-(require 'etaf-xiangqi)
-(etaf-xiangqi-open)
+## Capabilities
+
+- A native board for the OpenSpiel xiangqi rule set with an optional legal-move
+  list beside the board.
+- Hot-seat play in one window; after every accepted move the view switches to
+  the side to move.
+- Paper and night palettes; switching the theme never resets the match.
+- Undo and redo that restore the turn, and explicit local snapshots through
+  `C-s` and `C-o`.
+
+## Prerequisites
+
+| Requirement | Why | Check |
+| --- | --- | --- |
+| Emacs 29.1 or newer | the ETAF runtime | `emacs --version` |
+| `ecss`, `ebox`, `etaf`, `etaf-ui` | the framework and catalog components | every root entry is on `load-path` |
+| `etaf-gamekit` and its OpenSpiel backend | rule engine, game instance and state publication | `make -C etaf-gamekit engine-openspiel GAMEKIT_PYTHON=python3.11` |
+| Python 3.11 or newer | the OpenSpiel runtime | `python3.11 --version` |
+
+## Installation
+
+```sh
+git clone https://forgejo.vhkd.top/emacs-taf/ecss.git
+git clone https://forgejo.vhkd.top/emacs-taf/ebox.git
+git clone https://forgejo.vhkd.top/emacs-taf/etaf.git
+git clone https://forgejo.vhkd.top/emacs-taf/etaf-ui.git
+git clone https://forgejo.vhkd.top/emacs-taf/etaf-gamekit.git
+git clone https://forgejo.vhkd.top/emacs-taf/etaf-xiangqi.git
+make -C etaf-gamekit engine-openspiel GAMEKIT_PYTHON=python3.11
 ```
 
-Red moves first. Click a circular stone, then a marked intersection. Arrow
-keys and Enter follow the same input path. **走法** opens an optional legal-move
-list; the board remains the main surface. `U`/`Y` undo and redo, `N` starts a new
-match, `T` switches between the paper and night palettes, `F1` opens the help
-dialog and `Q` closes the match. Both palettes are supported; the theme switch
-never resets the match.
+Add every provider root and this repository to `load-path`:
 
-The [manual](docs/manual.md) describes the board, window adaptation and
-recovery. The [entry Commentary](etaf-xiangqi.el) owns the public API.
-`make check` runs compilation, API and real-backend behavior checks.
+```elisp
+(add-to-list 'load-path "/path/to/ecss")
+(add-to-list 'load-path "/path/to/ebox")
+(add-to-list 'load-path "/path/to/etaf")
+(add-to-list 'load-path "/path/to/etaf-ui")
+(add-to-list 'load-path "/path/to/etaf-gamekit")
+(add-to-list 'load-path "/path/to/etaf-xiangqi")
+(require 'etaf-xiangqi)
+
+(global-set-key (kbd "C-c x") #'etaf-xiangqi-open)
+```
+
+`M-x etaf-xiangqi-open` starts an independent match and fits the board to its
+window; it accepts an optional integer seed for a reproducible opening.
+
+## Keys
+
+| Input | Action |
+| --- | --- |
+| Click a stone / `Enter` | Select it and highlight its legal targets |
+| Click a highlighted point | Submit that native move |
+| 走法 → select a move | Open the legal-move list and submit that move directly |
+| `U` / `Y` | Undo or redo; the turn follows the restored position |
+| `N` or New match | Start a fresh match with a random seed |
+| `C-s` / `C-o` | Save or load an explicit local snapshot |
+| `T` or Light–Dark | Switch between the paper and night palettes |
+| `F1` or Help | Open the rules dialog |
+| `Q` | Close the match |
+
+Red (bottom) moves first. `etaf-xiangqi-appearance` selects the initial
+palette: `auto`, the default, follows the frame's background mode. Short
+windows remove vertical gaps and keep the board scrolled rather than
+stretched, and closing makes no implicit save.
+
+## Checks
+
+```sh
+make check   # structure, compilation, API and real-backend behavior scenarios
+```
+
+The [manual](docs/manual.md) documents the maintained GUI acceptance workflow
+separately.
+
+## Documentation
+
+- [Chu He manual](docs/manual.md) — the board, window adaptation and GUI
+  acceptance.
+- [Package entry](etaf-xiangqi.el) — the supported API inventory.
+- [GameKit](https://forgejo.vhkd.top/emacs-taf/etaf-gamekit) — the shared game
+  framework, its adapters and backend installation.
+
+## License
+
+GPL-3.0-or-later; see [LICENSE](LICENSE).
