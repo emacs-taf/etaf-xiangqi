@@ -105,6 +105,10 @@ not a screenshot with a separate hit-testing overlay. The image Host divides
 its artwork into ordinary text rows, preserving line height and keyboard input.
 Terminals use named text cells with the same native rules and activation paths.
 
+The header, board and controls form a horizontally centered table. Surplus
+height is shared 2:3 above and below the table, placing it slightly above the
+window center. Short windows remove this outer space without shrinking stones.
+
 Cell dimensions are chosen once from the opening frame's metrics: three text
 rows, and the nearest character width to a square. A typical 7 × 16 pixel font
 uses 49 × 48 pixel cells, making the board 441 × 480 pixels. Resizing does not

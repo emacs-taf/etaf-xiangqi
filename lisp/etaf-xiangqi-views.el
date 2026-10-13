@@ -151,10 +151,10 @@
                   presentation view (etaf-xiangqi--bot-arguments strength)))))))))
      :name "xiangqi-turn-policy"))
   :view
-  (column :width '(vw 100) :height '(vh 100)
-    :cross-align (if (< (or (car (etaf-value viewport)) 0)
+  (flex :width '(vw 100) :height '(vh 100) :flex-direction 'column
+    :align-items (if (< (or (car (etaf-value viewport)) 0)
                        (* (frame-char-width) (+ 4 (* 9 (plist-get metrics :columns)))))
-                     'start 'center)
+                     'flex-start 'center)
     :background-color (etaf-xiangqi--color :ui-bg) :color (etaf-xiangqi--color :ui-fg)
     :on-dismiss (lambda () (setf (etaf-value selected) nil))
     :keys (list
@@ -184,7 +184,8 @@
            (list "o" (lambda () (setf (etaf-value settings) t)) "对局设置")
            (list "<f1>" (lambda () (setf (etaf-value help) t)) "规则")
            (list "q" (lambda () (etaf-xiangqi-close session)) "退出"))
-    (column :ref 'xiangqi-root :width (list 'ch (+ 4 (* 9 (plist-get metrics :columns))))
+    (box :flex-grow 2 :flex-basis '(lh 0) :min-height '(lh 0))
+    (column :ref 'xiangqi-root :flex-shrink 0 :width (list 'ch (+ 4 (* 9 (plist-get metrics :columns))))
       :padding (if (etaf-value compact) '((lh 0) (ch 2)) '((lh 1) (ch 2)))
       :item-gap (if (etaf-value compact) '(lh 0) '(lh 1))
       (flex :width 'stretch :justify-content 'space-between :align-items 'center
@@ -304,7 +305,8 @@
           (etaf-label :text "点选棋子后，圆点标出合法目标，细环标出可吃的棋子。方向键移动棋盘光标，Enter 选中或落子。" :wrap-mode 'word)
           (etaf-label :text "U 悔棋，Y 重做，N 新局，O 对局设置，T 主题，Q 退出。人机对战里悔棋回到你上一个回合。" :wrap-mode 'word)
           (etaf-label :text "Tab 切换控件，Escape 取消选择或关闭弹窗。保存与读取使用本地文件，不自动覆盖棋局。" :wrap-mode 'word)
-          (etaf-label :text "走法与胜负由 OpenSpiel Xiangqi 判定，电脑走子由 GameKit 的 OpenSpiel 适配器搜索。" :wrap-mode 'word))))))
+          (etaf-label :text "走法与胜负由 OpenSpiel Xiangqi 判定，电脑走子由 GameKit 的 OpenSpiel 适配器搜索。" :wrap-mode 'word))))
+    (box :flex-grow 3 :flex-basis '(lh 0) :min-height '(lh 0))))
 
 (defun etaf-xiangqi--view (session)
   "Build this application's presentation through public framework APIs."
