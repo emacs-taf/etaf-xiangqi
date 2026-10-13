@@ -35,6 +35,18 @@
 ;; or hard. Each level selects the search's plies and seconds per move; the
 ;; dialog changes it for a running match.
 ;;
+;; Function: etaf-xiangqi-create (&optional seed)
+;;;###autoload (autoload 'etaf-xiangqi-create "etaf-xiangqi" nil t)
+;; Create and return an independent GameKit session without displaying it.
+;; SEED is an optional integer; omitted creates a fresh random opening. The
+;; caller owns display and lifecycle; pass the result to etaf-xiangqi-view and
+;; release it with etaf-gamekit-close.
+;;
+;; Function: etaf-xiangqi-view (session)
+;;;###autoload (autoload 'etaf-xiangqi-view "etaf-xiangqi" nil t)
+;; Return the reactive View for SESSION, suitable for embedding in a host such
+;; as an etaf-desktop window. The caller owns SESSION's display and lifecycle.
+;;
 ;; Function: etaf-xiangqi-open (&optional seed)
 ;;;###autoload (autoload 'etaf-xiangqi-open "etaf-xiangqi" nil t)
 ;; Open and display an independent match; return its GameKit instance. SEED is

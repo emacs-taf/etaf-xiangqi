@@ -17,11 +17,18 @@
                    (stringp (plist-get observation :observation)) t))
   :view #'etaf-xiangqi--view)
 
+(defun etaf-xiangqi-create (&optional seed)
+  "Return a session for etaf-xiangqi-view without displaying it.
+
+SEED is an optional integer.  The caller owns the session's display and
+lifecycle; release it with `etaf-gamekit-close'."
+  (etaf-gamekit-start etaf-xiangqi-game
+                      :options (list :seed (or seed (random most-positive-fixnum)))))
+
 (defun etaf-xiangqi-open (&optional seed)
   "Display an independent match with optional integer SEED and return its instance."
   (interactive)
-  (let* ((session (etaf-gamekit-start etaf-xiangqi-game
-                    :options (list :seed (or seed (random most-positive-fixnum)))))
+  (let* ((session (etaf-xiangqi-create seed))
          (buffer (etaf-gamekit-buffer session)))
     (with-current-buffer buffer
       (setq-local etaf-xiangqi--session session cursor-type nil mode-line-format nil

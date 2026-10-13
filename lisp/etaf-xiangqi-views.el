@@ -312,5 +312,12 @@
   "Build this application's presentation through public framework APIs."
   (etaf-view (etaf-xiangqi--app :session session)))
 
+(defun etaf-xiangqi-view (session)
+  "Return SESSION's reactive View for embedding in a host such as etaf-desktop.
+
+The caller owns SESSION's display and lifecycle; release it with
+`etaf-gamekit-close'."
+  (etaf-xiangqi--view session))
+
 (provide 'etaf-xiangqi-views)
 ;;; etaf-xiangqi-views.el ends here
