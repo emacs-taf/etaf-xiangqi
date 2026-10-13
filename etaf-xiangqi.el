@@ -6,9 +6,10 @@
 ;; Package-Requires: ((emacs "29.1") (etaf-gamekit "0.1.0") (etaf-ui "0.1.0"))
 ;;; Commentary:
 ;; Chu He presents OpenSpiel's xiangqi rules on a native ETAF board with both
-;; palettes and a hot-seat turn. Graphical displays use vector intersections
-;; and circular stones; terminals keep text cells. Artwork, selection and
-;; move hints are presentation only; legality and history stay in OpenSpiel.
+;; palettes and a computer opponent. Graphical displays use vector
+;; intersections and circular stones; terminals keep text cells. Artwork,
+;; selection and move hints are presentation only; legality and history stay
+;; in OpenSpiel, and its adapter supplies the opponent's search.
 ;;
 ;; Variable: etaf-xiangqi-game
 ;; Inert game definition usable with etaf-gamekit-start. Each instance owns an
@@ -20,12 +21,25 @@
 ;; follows the opening frame's background mode. Each instance can switch
 ;; independently with the theme button or T without resetting the match.
 ;;
+;; Variable: etaf-xiangqi-opponent
+;; Who plays which side in new instances: computer-black (the default, with the
+;; human on red), computer-red or hot-seat. The application dialog switches a
+;; running match with O; the computer moves when it is its turn and the backend
+;; advertises the bot operation.
+;;
+;; Variable: etaf-xiangqi-level
+;; Strength of the computer opponent in new instances: easy, normal (default)
+;; or hard. Each level selects the search's plies and seconds per move; the
+;; dialog changes it for a running match.
+;;
 ;; Function: etaf-xiangqi-open (&optional seed)
 ;;;###autoload (autoload 'etaf-xiangqi-open "etaf-xiangqi" nil t)
 ;; Open and display an independent match; return its GameKit instance. SEED is
-;; an optional integer. Both sides are played hot-seat in one buffer: after a
-;; move the bridge view switches to the side to move. Requires the OpenSpiel
-;; runtime installed by GameKit. No snapshot is loaded implicitly.
+;; an optional integer. The opponent follows etaf-xiangqi-opponent: the
+;; computer replies by itself, or both sides are played hot-seat in one buffer,
+;; where the bridge view switches to the side to move after every move.
+;; Requires the OpenSpiel runtime installed by GameKit. No snapshot is loaded
+;; implicitly.
 ;;
 ;; Function: etaf-xiangqi-close (&optional instance)
 ;;;###autoload (autoload 'etaf-xiangqi-close "etaf-xiangqi" nil t)
@@ -39,6 +53,13 @@
 (defcustom etaf-xiangqi-appearance 'auto
   "Initial appearance of new Xiangqi instances."
   :type '(choice (const auto) (const light) (const dark)) :group 'etaf-xiangqi)
+(defcustom etaf-xiangqi-opponent 'computer-black
+  "Who plays which side in new Xiangqi instances."
+  :type '(choice (const computer-black) (const computer-red) (const hot-seat))
+  :group 'etaf-xiangqi)
+(defcustom etaf-xiangqi-level 'normal
+  "Strength of the computer opponent in new Xiangqi instances."
+  :type '(choice (const easy) (const normal) (const hard)) :group 'etaf-xiangqi)
 (defconst etaf-xiangqi--directory
   (file-name-directory (or load-file-name buffer-file-name)))
 (let ((load-path (cons (expand-file-name "lisp" etaf-xiangqi--directory) load-path)))

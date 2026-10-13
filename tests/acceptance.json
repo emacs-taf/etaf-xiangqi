@@ -11,6 +11,26 @@
   "support": [],
   "cases": [
     {
+      "name": "etaf-xiangqi-computer-rejection-stops-and-new-match-recovers",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "A rejected computer move stays visible without retrying; New match recovers and lets the computer open."
+    },
+    {
+      "name": "etaf-xiangqi-computer-opening-move-arrives-first",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "With the computer on red, its opening move needs no local input and leaves the human to move."
+    },
+    {
+      "name": "etaf-xiangqi-computer-replies-with-a-search-move",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "The computer answers a human move with the default search budget and keeps the human's perspective."
+    },
+    {
+      "name": "etaf-xiangqi-computer-undo-restores-the-human-turn",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "One undo takes back the computer's reply and the human's own move."
+    },
+    {
       "name": "etaf-xiangqi-dialog-and-escape-dismiss-one-layer",
       "file": "tests/etaf-xiangqi-tests.el",
       "purpose": "Escape closes help before clearing the selected stone, preserving the native match."
@@ -24,6 +44,16 @@
       "name": "etaf-xiangqi-invalid-action-preserves-the-board",
       "file": "tests/etaf-xiangqi-tests.el",
       "purpose": "An action outside the legal set changes nothing and is reported."
+    },
+    {
+      "name": "etaf-xiangqi-settings-level-drives-the-search",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "The difficulty picker selects the search budget the backend uses for the next move."
+    },
+    {
+      "name": "etaf-xiangqi-settings-switch-to-hot-seat",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "The settings dialog hands both sides to the local player without a computer reply."
     },
     {
       "name": "etaf-xiangqi-themes-preserve-the-match",

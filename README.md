@@ -2,12 +2,14 @@
 
 Chinese chess (xiangqi) with a native ETAF board and the OpenSpiel rule engine,
 built as an independent [GameKit](https://github.com/emacs-taf/etaf-gamekit)
-application. Two players alternate hot-seat in one window: pick a stone, click a
-highlighted point, and the bridge hands the turn to the other side.
+application. Play the computer or a friend: pick a stone, click a highlighted
+point, and the bridge answers for the computer's side or hands the turn to the
+other local player.
 
-OpenSpiel owns legality, check, repetition and history; this application owns
-the board, both palettes, selection, the move list and the launcher. It never
-re-implements a move.
+OpenSpiel owns legality, check, repetition and history, and its adapter owns the
+computer's search; this application owns the board, both palettes, selection,
+the move list, the opponent settings and the launcher. It never re-implements a
+move.
 
 ![The board in the paper light theme](examples/screenshot-light.png)
 
@@ -17,11 +19,14 @@ re-implements a move.
 
 - A native board for the OpenSpiel xiangqi rule set with an optional legal-move
   list beside the board.
+- A computer opponent in easy, normal and hard search levels. It moves by itself
+  on its turn, and the opponent dialog switches sides or hands both sides to
+  local players without restarting the match.
 - Hot-seat play in one window; after every accepted move the view switches to
   the side to move.
 - Paper and night palettes; switching the theme never resets the match.
-- Undo and redo that restore the turn, and explicit local snapshots through
-  `C-s` and `C-o`.
+- Undo and redo that restore the turn (against the computer, one step restores
+  your own last round), and explicit local snapshots through `C-s` and `C-o`.
 
 ## Prerequisites
 
@@ -68,17 +73,22 @@ window; it accepts an optional integer seed for a reproducible opening.
 | Click a stone / `Enter` | Select it and highlight its legal targets |
 | Click a highlighted point | Submit that native move |
 | 走法 → select a move | Open the legal-move list and submit that move directly |
-| `U` / `Y` | Undo or redo; the turn follows the restored position |
+| `U` / `Y` | Undo or redo the last local round (one move each in hot-seat play) |
 | `N` or New match | Start a fresh match with a random seed |
+| `O` or 设置 | Choose the opponent (hot-seat, computer sides) and difficulty |
 | `C-s` / `C-o` | Save or load an explicit local snapshot |
 | `T` or Light–Dark | Switch between the paper and night palettes |
 | `F1` or Help | Open the rules dialog |
 | `Q` | Close the match |
 
-Red (bottom) moves first. `etaf-xiangqi-appearance` selects the initial
-palette: `auto`, the default, follows the frame's background mode. Short
-windows remove vertical gaps and keep the board scrolled rather than
-stretched, and closing makes no implicit save.
+Red (bottom) moves first. `etaf-xiangqi-opponent` chooses who plays which side
+in new matches: `computer-black` (the default, with the human on red),
+`computer-red`, or `hot-seat`; `etaf-xiangqi-level` selects `easy`, `normal`
+(the default) or `hard`. Both are switchable at runtime from the opponent
+dialog. `etaf-xiangqi-appearance` selects the initial palette: `auto`, the
+default, follows the frame's background mode. Short windows remove vertical
+gaps and keep the board scrolled rather than stretched, and closing makes no
+implicit save.
 
 ## Checks
 

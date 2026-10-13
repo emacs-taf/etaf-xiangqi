@@ -6,8 +6,9 @@
 (declare-function taf-benchmark-register "performance-driver" (id &rest properties))
 
 (defun etaf-xiangqi-benchmark--fixture (mode operation)
-  "Create one complete hot-seat board for MODE and OPERATION."
+  "Create one complete local board for MODE and OPERATION."
   (let* ((etaf-xiangqi-appearance 'light)
+         (etaf-xiangqi-opponent 'hot-seat)
          (session (etaf-xiangqi-open 11))
          (buffer (etaf-gamekit-buffer session))
          (runtime (etaf-runtime-for-buffer buffer))

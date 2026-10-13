@@ -51,7 +51,9 @@ focus. Dispose the owned match and restore frame geometry even after failure."
             :name "xiangqi-board" :claim "Vector appearance and native input across both themes and viewport sizes"
             :initialize
             (lambda (context)
-              (let ((etaf-xiangqi-appearance 'light)) (setq session (etaf-xiangqi-open 11)))
+              (let ((etaf-xiangqi-appearance 'light)
+                    (etaf-xiangqi-opponent 'hot-seat))
+                (setq session (etaf-xiangqi-open 11)))
               (setq runtime (etaf-runtime-for-buffer (etaf-gamekit-buffer session)))
               (etaf-gui-verifier-context-select-buffer context (etaf-gamekit-buffer session))
               (message nil))
@@ -109,7 +111,31 @@ focus. Dispose the owned match and restore frame geometry even after failure."
                :id "legal-moves" :screenshot t
                :execute (lambda (_context) (etaf-focus runtime 'xiangqi-show-moves) (etaf-activate runtime))
                :settled-p (lambda (context) (and (ready context) (string-match-p "可走位置" (text)))))
-              (key-action "close-legal-moves" "<escape>" (lambda () (not (string-match-p "可走位置" (text))))))))
+              (key-action "close-legal-moves" "<escape>" (lambda () (not (string-match-p "可走位置" (text)))))
+              (key-action "opponent-settings" "o" (lambda () (string-match-p "对局设置" (text))) t)
+              (etaf-gui-verifier-action-create
+               :id "computer-takes-red" :screenshot t
+               :execute (lambda (_context)
+                          (etaf-focus runtime 'xiangqi-opponent-computer-red)
+                          (etaf-activate runtime))
+               :settled-p (lambda (context)
+                            (and (ready context)
+                                 (= (etaf-gamekit-view session :action_count) 1)
+                                 (= (etaf-gamekit-view session :player) 1)))
+               :assertions
+               (lambda (_context)
+                 (list (etaf-gui-verifier-assert
+                        "The computer answers by itself when it owns the side to move"
+                        (and (= 1 (etaf-gamekit-view session :action_count))
+                             (= 1 (etaf-gamekit-view session :current_player))
+                             (string-match-p "轮到你走棋" (text)))))))
+              (key-action "close-opponent-settings" "<escape>"
+                          (lambda () (not (string-match-p "对局设置" (text)))))
+              (key-action "computer-light" "t" (lambda () (string-match-p "暗色" (text))) t)
+              (key-action "opponent-settings-light" "o"
+                          (lambda () (string-match-p "对局设置" (text))) t)
+              (key-action "close-opponent-settings-light" "<escape>"
+                          (lambda () (not (string-match-p "对局设置" (text))))))))
            directory))
       (when session (etaf-xiangqi-close session))
       (set-frame-size nil (car size) (cdr size) t)

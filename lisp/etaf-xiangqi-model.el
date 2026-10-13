@@ -39,6 +39,17 @@
           :to (etaf-xiangqi--coord (string-to-number (match-string 3 label))
                                    (string-to-number (match-string 4 label))))))
 
+(defun etaf-xiangqi--result (returns)
+  "Return the winning side in public terminal RETURNS: red, black or draw."
+  (when (and (consp returns) (numberp (car returns)))
+    (cond ((> (car returns) 0) 'red) ((< (car returns) 0) 'black) (t 'draw))))
+
+(defconst etaf-xiangqi--levels
+  '((easy :depth 2 :seconds 1.0)
+    (normal :depth 4 :seconds 2.0)
+    (hard :depth 8 :seconds 4.0))
+  "Search budget per computer level: maximum plies and seconds per move.")
+
 (defun etaf-xiangqi--table (view)
   "Project the public OpenSpiel xiangqi VIEW without re-implementing rules."
   (when-let* ((text (plist-get view :observation))
@@ -57,7 +68,24 @@
           :count (or (plist-get view :action_count) 0)
           :can-undo (eq t (plist-get view :can_undo))
           :can-redo (eq t (plist-get view :can_redo))
-          :terminal (eq t (plist-get view :terminal)))))
+          :terminal (eq t (plist-get view :terminal))
+          :result (and (eq t (plist-get view :terminal))
+                       (etaf-xiangqi--result (plist-get view :returns))))))
+
+(defun etaf-xiangqi--computer (opponent)
+  "Return the side played by the computer in OPPONENT, or nil for hot-seat."
+  (pcase opponent ('computer-black 'black) ('computer-red 'red) (_ nil)))
+
+(defun etaf-xiangqi--bot-arguments (level)
+  "Return the public bot request arguments selecting LEVEL's search budget."
+  (append (list :policy "search")
+          (cdr (or (assq level etaf-xiangqi--levels)
+                   (assq 'normal etaf-xiangqi--levels)))))
+
+(defun etaf-xiangqi--step-count (computer count)
+  "Return history steps from COUNT plies with COMPUTER playing one side.
+Use a full round at a human decision point, one ply otherwise or hot-seat."
+  (if (and computer (= (% count 2) (if (eq computer 'red) 1 0))) 2 1))
 
 (defun etaf-xiangqi--cell (table row column)
   "Return the piece char at ROW/COLUMN in TABLE, or nil for an empty point."
@@ -103,10 +131,11 @@
 
 (defun etaf-xiangqi--snapshot (session selected operation)
   "Choose an explicit snapshot file for OPERATION."
-  (let ((file (etaf-call-with-input
-               (lambda () (read-file-name (concat (capitalize operation) " match: ")
-                                          nil nil (equal operation "load") "xiangqi.json")))))
-    (when file (etaf-xiangqi--send session selected operation (list :path (expand-file-name file))))))
+  (when (eq (etaf-gamekit-status session) 'ready)
+    (let ((file (etaf-call-with-input
+                 (lambda () (read-file-name (concat (capitalize operation) " match: ")
+                                            nil nil (equal operation "load") "xiangqi.json")))))
+      (when file (etaf-xiangqi--send session selected operation (list :path (expand-file-name file)))))))
 
 (provide 'etaf-xiangqi-model)
 ;;; etaf-xiangqi-model.el ends here
