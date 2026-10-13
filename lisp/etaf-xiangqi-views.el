@@ -5,20 +5,22 @@
 (require 'etaf-ui)
 (require 'etaf-xiangqi-theme)
 (require 'etaf-xiangqi-model)
+(require 'etaf-xiangqi-presentation)
 (require 'etaf-xiangqi-board)
 (declare-function etaf-xiangqi-close "etaf-xiangqi" (&optional instance))
 (defvar etaf-xiangqi-appearance)
 (defvar etaf-xiangqi-opponent)
 (defvar etaf-xiangqi-level)
 
-(defun etaf-xiangqi--turn-text (state computer failure)
-  "Describe public STATE with COMPUTER on one side and optional FAILURE."
+(defun etaf-xiangqi--turn-text (state computer failure phase)
+  "Describe public STATE with COMPUTER, optional FAILURE and presentation PHASE."
   (cond ((null state) "正在开局")
         ((plist-get state :terminal)
          (pcase (plist-get state :result)
            ('red "红方胜") ('black "黑方胜") ('draw "和棋") (_ "对局结束")))
         (failure "操作失败，请重试或重开")
-        ((eq (plist-get state :side) computer) "电脑思考中…")
+        ((eq phase 'moving) "电脑落子中…")
+        ((or phase (eq (plist-get state :side) computer)) "电脑思考中…")
         (computer "轮到你走棋")
         ((eq (plist-get state :side) 'red) "红方行棋")
         (t "黑方行棋")))
@@ -50,7 +52,7 @@
       (etaf-button :for (move (etaf-value moves)) :key (plist-get move :id)
         :ref (intern (format "xiangqi-move-%d" (plist-get move :id)))
         :label (let* ((from (plist-get move :from)) (to (plist-get move :to)))
-                 (format "%s · %d路 → %d路%d行"
+                 (format "%s · %d 路 → %d 路 %d 行"
                          (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) (car from) (cdr from)))
                          (1+ (cdr from)) (1+ (cdr to)) (1+ (car to))))
         :variant 'ghost :disabled (not (eq (etaf-gamekit-status session) 'ready))
@@ -67,7 +69,12 @@
                                                  etaf-xiangqi--dark-theme etaf-xiangqi--light-theme)) :test #'equal))
              (metrics (etaf-xiangqi--board-metrics))
              (observation (etaf-computed (lambda () (etaf-gamekit-view session)) :test #'equal))
-             (table (etaf-computed (lambda () (etaf-xiangqi--table (etaf-value observation))) :test #'equal))
+             (presentation (etaf-xiangqi--presentation-create session (plist-get metrics :graphic)))
+             (shown (etaf-xiangqi--presentation-view presentation))
+             (phase (etaf-xiangqi--presentation-phase presentation))
+             (last-move (etaf-xiangqi--presentation-last presentation))
+             (motion (etaf-xiangqi--presentation-motion presentation))
+             (table (etaf-computed (lambda () (etaf-xiangqi--table (etaf-value shown))) :test #'equal))
              (opponent (etaf-ref etaf-xiangqi-opponent))
              (level (etaf-ref etaf-xiangqi-level))
              (computer (etaf-computed
@@ -77,7 +84,8 @@
                         :test #'eq))
              (ready (etaf-computed (lambda ()
                                     (etaf-value observation)
-                                    (eq (etaf-gamekit-status session) 'ready))))
+                                    (and (not (etaf-value phase))
+                                         (eq (etaf-gamekit-status session) 'ready)))))
              (undo-available (etaf-computed
                               (lambda ()
                                 (and (eq t (etaf-gamekit-view session :can_undo))
@@ -126,7 +134,8 @@
        ;; Sending immediately makes the session busy, preventing duplicate work.
        (etaf-value observation)
        (let ((computer-side (etaf-value computer)) (strength (etaf-value level)))
-         (when (and (eq (etaf-gamekit-status session) 'ready)
+         (when (and (not (etaf-value phase))
+                    (eq (etaf-gamekit-status session) 'ready)
                     (not (etaf-gamekit-last-error session)))
            (let* ((view (etaf-gamekit-observation session))
                   (current (plist-get view :current_player))
@@ -138,7 +147,8 @@
                  (etaf-gamekit-action session "set-player" (list :player seat)))
                 ((and computer-side (/= current seat))
                  (setf (etaf-value selected) nil)
-                 (etaf-gamekit-action session "bot" (etaf-xiangqi--bot-arguments strength)))))))))
+                 (etaf-xiangqi--presentation-begin
+                  presentation view (etaf-xiangqi--bot-arguments strength)))))))))
      :name "xiangqi-turn-policy"))
   :view
   (column :width '(vw 100) :height '(vh 100)
@@ -162,10 +172,13 @@
                                              (list :count (etaf-xiangqi--step-count (etaf-value computer)
                                                                                       (etaf-gamekit-view session :action_count))))))
                  "重做")
-           (list "n" (lambda () (etaf-xiangqi--send session selected "reset"
-                                                        (list :seed (random most-positive-fixnum)))) "新局")
-           (list "C-s" (lambda () (etaf-xiangqi--snapshot session selected "save")) "保存")
-           (list "C-o" (lambda () (etaf-xiangqi--snapshot session selected "load")) "读取")
+           (list "n" (lambda () (when (etaf-value ready)
+                                  (etaf-xiangqi--send session selected "reset"
+                                                      (list :seed (random most-positive-fixnum))))) "新局")
+           (list "C-s" (lambda () (when (etaf-value ready)
+                                    (etaf-xiangqi--snapshot session selected "save"))) "保存")
+           (list "C-o" (lambda () (when (etaf-value ready)
+                                    (etaf-xiangqi--snapshot session selected "load"))) "读取")
            (list "t" (lambda () (setf (etaf-value appearance)
                                       (if (eq (etaf-value appearance) 'dark) 'light 'dark))) "切换亮暗主题")
            (list "o" (lambda () (setf (etaf-value settings) t)) "对局设置")
@@ -178,7 +191,7 @@
         (etaf-label :text "中国象棋" :variant 'strong)
         (etaf-label :ref 'xiangqi-status
           :text (etaf-xiangqi--turn-text (etaf-value table) (etaf-value computer)
-                                         (etaf-gamekit-last-error session))
+                                         (etaf-gamekit-last-error session) (etaf-value phase))
           :color (etaf-xiangqi--color :ui-accent)))
       (flex :width 'stretch :justify-content 'space-between :align-items 'center
         :region '(:id xiangqi-controls :label "对局操作" :key "a" :enter xiangqi-new)
@@ -209,12 +222,17 @@
           (etaf-xiangqi--theme-switch :appearance appearance)))
       (etaf-label :if (null (etaf-value table)) :text "正在开局…" :variant 'muted)
       (etaf-xiangqi--board :if (etaf-value table) :session session :table playable
-        :selected selected :palette theme :metrics metrics)
+        :selected selected :palette theme :metrics metrics :motion motion :last-move last-move)
       (etaf-label :ref 'xiangqi-selection
         :text (if-let* ((coord (etaf-value selected)))
                   (format "已选 %s · 点击圆点落子"
                           (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) (car coord) (cdr coord))))
-                "选择棋子，再点目标落子")
+                (cond ((etaf-value motion)
+                       (etaf-xiangqi--move-description (plist-get (etaf-value motion) :move)))
+                      ((etaf-value last-move)
+                       (etaf-xiangqi--move-description (etaf-value last-move)))
+                      ((etaf-value phase) "等待电脑落子…")
+                      (t "选择棋子，再点目标落子")))
         :variant 'muted)
       (flex :width 'stretch :justify-content 'space-between :align-items 'center
         (etaf-label :text (format "%s  ·  %d 手" (etaf-xiangqi--match-text (etaf-value computer))
@@ -282,7 +300,7 @@
       (etaf-dialog :open help :title "中国象棋 · 规则与操作" :width '(ch 58) :compact t
         :on-close (lambda () (setf (etaf-value help) nil))
         (column :item-gap '(lh 1)
-          (etaf-label :text "默认与电脑对战：你执红先行，电脑执黑。电脑轮到时自动走子，不需要你替它走。" :wrap-mode 'word)
+          (etaf-label :text "默认你执红先行，电脑执黑。电脑落子前至少留出 0.6 秒，再用动画移动棋子；虚线框是起点，实线框是落点，棋盘下方显示上一手。" :wrap-mode 'word)
           (etaf-label :text "点选棋子后，圆点标出合法目标，细环标出可吃的棋子。方向键移动棋盘光标，Enter 选中或落子。" :wrap-mode 'word)
           (etaf-label :text "U 悔棋，Y 重做，N 新局，O 对局设置，T 主题，Q 退出。人机对战里悔棋回到你上一个回合。" :wrap-mode 'word)
           (etaf-label :text "Tab 切换控件，Escape 取消选择或关闭弹窗。保存与读取使用本地文件，不自动覆盖棋局。" :wrap-mode 'word)

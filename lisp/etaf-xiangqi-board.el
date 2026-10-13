@@ -100,12 +100,28 @@ discarding the artwork that is still being shown."
     (setcar cache (make-hash-table :test #'equal)))
   (puthash key value (car cache)))
 
-(defun etaf-xiangqi--cell-art (cache palette metrics row column piece selected target focused)
+(defun etaf-xiangqi--stone-art (palette metrics x y piece)
+  "Draw PIECE at pixel center X/Y using PALETTE and fixed METRICS."
+  (let ((radius (* (min (plist-get metrics :width) (plist-get metrics :height)) 0.385))
+        (ink (plist-get palette (if (eq (etaf-xiangqi--side piece) 'red) :xq-red :xq-black))))
+    (concat
+     (etaf-ui-svg-circle x (+ y 1.7) (+ radius 0.8)
+                         :fill (plist-get palette :xq-shadow) :opacity .20)
+     (etaf-ui-svg-circle x y radius :fill (plist-get palette :xq-piece)
+                         :stroke (plist-get palette :xq-edge) :stroke-width 1.1)
+     (etaf-ui-svg-circle x y (- radius 3.1) :fill "none" :stroke ink :stroke-width .85 :opacity .72)
+     (etaf-ui-svg-text x (+ y (* radius 0.41)) (etaf-xiangqi--glyph piece)
+                       :font-family "Songti SC,STSong,Noto Serif CJK SC,serif"
+                       :font-weight 600 :font-size (* radius 1.24) :text-anchor "middle" :fill ink))))
+
+(defun etaf-xiangqi--cell-art (cache palette metrics row column piece selected target focused &optional marker sprite)
   "Return cached vector artwork for one interactive intersection.
 CACHE is instance-owned and bounded. PALETTE and METRICS are presentation
-values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match."
+values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match.
+MARKER is from/to for the previous move.  SPRITE is (PIECE X Y), clipped into
+this cell's SVG viewport; it never changes tile geometry or activation."
   (let* ((width (plist-get metrics :width)) (height (plist-get metrics :height))
-         (key (list palette width height row column piece selected target focused)))
+         (key (list palette width height row column piece selected target focused marker sprite)))
     (or (etaf-xiangqi--cache-get cache key)
         (let* ((base-key (list 'board palette width height))
                (parts (or (etaf-xiangqi--cache-get cache base-key)
@@ -114,10 +130,16 @@ values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match."
                            (etaf-xiangqi--board-parts palette width height))))
                (x (* (+ column 0.5) width)) (y (* (+ row 0.5) height))
                (radius (* (min width height) 0.385))
-               (ink (plist-get palette (if (eq (etaf-xiangqi--side piece) 'red) :xq-red :xq-black)))
                (accent (plist-get palette :xq-accent))
                (body (etaf-xiangqi--board-window parts palette (* column width)
                                                  (* row height) width height)))
+          (when (and marker (not selected))
+            (setq body (concat body
+                               (etaf-ui-svg-rect
+                                (+ (* column width) 3) (+ (* row height) 3) (- width 6) (- height 6)
+                                :rx 5 :fill "none" :stroke (plist-get palette :ui-warning-fg)
+                                :stroke-width (if (eq marker 'to) 2 1.4)
+                                :stroke-dasharray (when (eq marker 'from) "3 3")))))
           (when (or focused selected)
             (setq body (concat body
                                (etaf-ui-svg-circle x y (+ radius 3)
@@ -125,23 +147,7 @@ values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match."
                                                    :stroke-width (if selected 2.3 1.2)
                                                    :stroke-dasharray (unless selected "3 3")))))
           (when piece
-            (setq body
-                  (concat body
-                          (etaf-ui-svg-circle x (+ y 1.7) (+ radius 0.8)
-                                              :fill (plist-get palette :xq-shadow)
-                                              :opacity .20)
-                          (etaf-ui-svg-circle x y radius
-                                              :fill (plist-get palette :xq-piece)
-                                              :stroke (plist-get palette :xq-edge)
-                                              :stroke-width 1.1)
-                          (etaf-ui-svg-circle x y (- radius 3.1)
-                                              :fill "none" :stroke ink
-                                              :stroke-width .85 :opacity .72)
-                          (etaf-ui-svg-text
-                           x (+ y (* radius 0.41)) (etaf-xiangqi--glyph piece)
-                           :font-family "Songti SC,STSong,Noto Serif CJK SC,serif"
-                           :font-weight 600 :font-size (* radius 1.24)
-                           :text-anchor "middle" :fill ink))))
+            (setq body (concat body (etaf-xiangqi--stone-art palette metrics x y piece))))
           (when target
             (setq body (concat body
                                (if piece
@@ -153,12 +159,33 @@ values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match."
                                   (etaf-ui-svg-circle x y 7.5 :fill "none"
                                                       :stroke accent :stroke-width .8
                                                       :opacity .65))))))
+          (when sprite
+            (setq body (concat body (etaf-xiangqi--stone-art
+                                    palette metrics (nth 1 sprite) (nth 2 sprite) (car sprite)))))
           (let ((image (etaf-ui-svg-image
                         body width height
                         (list (* column width) (* row height) width height))))
             (etaf-xiangqi--cache-put cache key image))))))
 
-(etaf-define-component etaf-xiangqi--board (&key session table selected palette metrics)
+(defun etaf-xiangqi--move-marker (move position)
+  "Return MOVE's endpoint role at POSITION, or nil."
+  (cond ((equal position (plist-get move :from)) 'from)
+        ((equal position (plist-get move :to)) 'to)))
+
+(defun etaf-xiangqi--moving-stone (motion metrics row column)
+  "Return the moving stone's pixel pose only when it overlaps ROW/COLUMN."
+  (when motion
+    (let* ((move (plist-get motion :move))
+           (from (plist-get move :from)) (to (plist-get move :to))
+           (progress (etaf-value (plist-get motion :progress)))
+           (width (plist-get metrics :width)) (height (plist-get metrics :height))
+           (x (round (* width (+ .5 (cdr from) (* progress (- (cdr to) (cdr from)))))))
+           (y (round (* height (+ .5 (car from) (* progress (- (car to) (car from))))))))
+      (when (and (< (abs (- x (* width (+ column .5)))) width)
+                 (< (abs (- y (* height (+ row .5)))) height))
+        (list (plist-get move :piece) x y)))))
+
+(etaf-define-component etaf-xiangqi--board (&key session table selected palette metrics motion last-move)
   :bindings ((cache (cons (make-hash-table :test #'equal) (make-hash-table :test #'equal))) (cursor (etaf-ref nil)))
   :view
   (etaf-tile-grid :ref 'xiangqi-board :rows 10 :columns 9
@@ -169,20 +196,33 @@ values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match."
     (when (plist-get metrics :graphic)
       (lambda (r c)
         (let* ((position (etaf-xiangqi--coord r c)) (state (etaf-value table))
-               (chosen (etaf-value selected)))
+               (chosen (etaf-value selected)) (moving (etaf-value motion))
+               (move (or (plist-get moving :move) (etaf-value last-move)))
+               (piece (unless (and moving (equal position (plist-get move :from)))
+                        (etaf-xiangqi--cell state r c))))
           (etaf-xiangqi--cell-art
-           cache (etaf-value palette) metrics r c (etaf-xiangqi--cell state r c)
+           cache (etaf-value palette) metrics r c piece
            (equal position chosen) (and (etaf-xiangqi--move state chosen position) t)
-           (equal position (etaf-value cursor))))))
+           (equal position (etaf-value cursor)) (etaf-xiangqi--move-marker move position)
+           (etaf-xiangqi--moving-stone moving metrics r c)))))
     :cell-text (lambda (r c) (or (etaf-xiangqi--glyph (etaf-xiangqi--cell (etaf-value table) r c)) "·"))
-    :cell-background (lambda (_r _c) (plist-get (etaf-value palette) :xq-paper))
+    :cell-background (lambda (r c)
+                       (plist-get (etaf-value palette)
+                                  (if (and (not (plist-get metrics :graphic))
+                                           (not (equal (cons r c) (etaf-value selected)))
+                                           (etaf-xiangqi--move-marker (etaf-value last-move) (cons r c)))
+                                      :ui-warning-bg :xq-paper)))
     :cell-color (lambda (r c) (plist-get (etaf-value palette)
                                        (if (eq (etaf-xiangqi--side (etaf-xiangqi--cell (etaf-value table) r c)) 'red)
-                                           :xq-red :xq-black)))
+                                           :ui-accent :ui-fg)))
     :cell-label (lambda (r c)
-                  (format "%s · 第%d行第%d路%s" (or (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) r c)) "空位")
-                          (1+ r) (1+ c)
-                          (if (etaf-xiangqi--move (etaf-value table) (etaf-value selected) (cons r c)) " · 可走" "")))
+                  (format "%s · %c%d · 第 %d 行第 %d 路%s"
+                          (or (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) r c)) "空位")
+                          (+ ?a c) (- 9 r) (1+ r) (1+ c)
+                          (concat
+                           (if (etaf-xiangqi--move (etaf-value table) (etaf-value selected) (cons r c)) " · 可走" "")
+                           (pcase (etaf-xiangqi--move-marker (etaf-value last-move) (cons r c))
+                             ('from " · 电脑起点") ('to " · 电脑落点") (_ "")))))
     :on-cell-focus (lambda (r c) (setf (etaf-value cursor) (cons r c)))
     :on-cell-press (lambda (r c) (etaf-xiangqi--press session selected (etaf-value table) (cons r c)))))
 

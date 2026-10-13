@@ -25,7 +25,10 @@
 ;; Who plays which side in new instances: computer-black (the default, with the
 ;; human on red), computer-red or hot-seat. The application dialog switches a
 ;; running match with O; the computer moves when it is its turn and the backend
-;; advertises the bot operation.
+;; advertises the bot operation. A reply leaves at least 0.6 seconds of reading
+;; time, then uses a scoped ETAF transition on graphical boards. The last move's
+;; endpoints and caption remain visible. Disabling etaf-animation-enabled keeps
+;; the reading interval and static feedback without interpolated movement.
 ;;
 ;; Variable: etaf-xiangqi-level
 ;; Strength of the computer opponent in new instances: easy, normal (default)
@@ -45,6 +48,7 @@
 ;;;###autoload (autoload 'etaf-xiangqi-close "etaf-xiangqi" nil t)
 ;; Close INSTANCE and its buffer. Omitted uses the current Xiangqi buffer.
 ;; No automatic save is performed; use the application's Save command first.
+;; Closing also cancels pending reply presentation and its animation scope.
 ;;
 ;;; Code:
 (require 'etaf-gamekit)

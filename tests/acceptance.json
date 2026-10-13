@@ -11,6 +11,31 @@
   "support": [],
   "cases": [
     {
+      "name": "etaf-xiangqi-slow-search-does-not-add-a-second-delay",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "A search longer than the response interval is not followed by a second artificial delay."
+    },
+    {
+      "name": "etaf-xiangqi-fast-reply-waits-and-keeps-visible-move-markers",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "A fast computer reply waits for the reading interval, then exposes persistent endpoints and a caption across both themes."
+    },
+    {
+      "name": "etaf-xiangqi-reset-and-close-discard-delayed-replies",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "Reset and close supersede a delayed reply without ghost moves or callbacks into a disposed match."
+    },
+    {
+      "name": "etaf-xiangqi-winning-reply-keeps-its-caption",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "A winning computer move names the winner and retains its final move caption."
+    },
+    {
+      "name": "etaf-xiangqi-capture-description-with-reduced-motion",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "The reduced-motion and terminal path still names a captured piece after the reading interval."
+    },
+    {
       "name": "etaf-xiangqi-computer-rejection-stops-and-new-match-recovers",
       "file": "tests/etaf-xiangqi-tests.el",
       "purpose": "A rejected computer move stays visible without retrying; New match recovers and lets the computer open."

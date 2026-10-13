@@ -18,12 +18,14 @@ focus. Dispose the owned match and restore frame geometry even after failure."
   (unless (display-graphic-p) (error "A graphical frame is required"))
   (let ((size (cons (frame-pixel-width) (frame-pixel-height)))
         (fullscreen (frame-parameter nil 'fullscreen))
-        session runtime board before focus)
+        (etaf-animation-enabled t) (etaf-animation-paused nil)
+        session runtime board before focus flight-at)
     (unwind-protect
         (cl-labels
             ((ready (_context)
                (and session (eq (etaf-gamekit-status session) 'ready)
-                    (etaf-host-ref-size runtime 'xiangqi-cell-6-4)))
+                    (etaf-host-ref-size runtime 'xiangqi-cell-6-4)
+                    (not (plist-get (etaf-runtime-host-props-for runtime 'xiangqi-new) :disabled))))
              (text ()
                (with-current-buffer (etaf-gamekit-buffer session)
                  (buffer-substring-no-properties (point-min) (point-max))))
@@ -114,10 +116,26 @@ focus. Dispose the owned match and restore frame geometry even after failure."
               (key-action "close-legal-moves" "<escape>" (lambda () (not (string-match-p "可走位置" (text)))))
               (key-action "opponent-settings" "o" (lambda () (string-match-p "对局设置" (text))) t)
               (etaf-gui-verifier-action-create
-               :id "computer-takes-red" :screenshot t
+               :id "computer-in-flight-dark" :screenshot t
                :execute (lambda (_context)
                           (etaf-focus runtime 'xiangqi-opponent-computer-red)
-                          (etaf-activate runtime))
+                          (etaf-activate runtime)
+                          (execute-kbd-macro (kbd "<escape>")))
+               :settled-p (lambda (_context)
+                            (when (string-match-p "电脑落子中" (text))
+                              (unless flight-at (setq flight-at (float-time)))
+                              (when (> (- (float-time) flight-at) 0.07)
+                                (setq etaf-animation-paused t)
+                                t))))
+              (etaf-gui-verifier-action-create
+               :id "computer-in-flight-light" :screenshot t
+               :execute (lambda (_context) (execute-kbd-macro (kbd "t")))
+               :settled-p (lambda (_context)
+                            (and etaf-animation-paused (string-match-p "暗色" (text))
+                                 (string-match-p "电脑落子中" (text)))))
+              (etaf-gui-verifier-action-create
+               :id "computer-takes-red" :screenshot t
+               :execute (lambda (_context) (setq etaf-animation-paused nil))
                :settled-p (lambda (context)
                             (and (ready context)
                                  (= (etaf-gamekit-view session :action_count) 1)
@@ -129,9 +147,6 @@ focus. Dispose the owned match and restore frame geometry even after failure."
                         (and (= 1 (etaf-gamekit-view session :action_count))
                              (= 1 (etaf-gamekit-view session :current_player))
                              (string-match-p "轮到你走棋" (text)))))))
-              (key-action "close-opponent-settings" "<escape>"
-                          (lambda () (not (string-match-p "对局设置" (text)))))
-              (key-action "computer-light" "t" (lambda () (string-match-p "暗色" (text))) t)
               (key-action "opponent-settings-light" "o"
                           (lambda () (string-match-p "对局设置" (text))) t)
               (key-action "close-opponent-settings-light" "<escape>"

@@ -22,6 +22,9 @@ move.
 - A computer opponent in easy, normal and hard search levels. It moves by itself
   on its turn, and the opponent dialog switches sides or hands both sides to
   local players without restarting the match.
+- Readable computer turns: at least 0.6 seconds before the reply appears, a
+  smooth ETAF move animation, persistent origin/destination marks and a caption
+  naming the move and any capture. Search still runs immediately in the backend.
 - Hot-seat play in one window; after every accepted move the view switches to
   the side to move.
 - Paper and night palettes; switching the theme never resets the match.

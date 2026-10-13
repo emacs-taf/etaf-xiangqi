@@ -22,15 +22,17 @@ public API.
 
 Red (bottom) moves first. `etaf-xiangqi-opponent` chooses who plays which side
 in new matches: `computer-black` (the default, with the human on red),
-`computer-red`, or `hot-seat`. The computer moves as soon as it is its turn; the
-board stops accepting moves and the status line reads 电脑思考中… until its reply
-arrives, so a stuck request shows its error instead of a silent retry.
+`computer-red`, or `hot-seat`. The computer starts searching immediately, but
+its reply is not displayed until at least 0.6 seconds after its turn begins.
+This leaves your own move visible first. A longer search consumes that interval
+already; there is no extra fixed wait after it finishes. The status reads
+电脑思考中… while searching or holding an early reply, then 电脑落子中… during
+the move animation. The engine remains authoritative throughout.
 `etaf-xiangqi-level` selects `easy`, `normal` (the default) or `hard`, whose
 limits are 2 plies/1 second, 4 plies/2 seconds and 8 plies/4 seconds per move.
 A time limit can stop search before the depth cap. This is an offline casual
 opponent, not a tournament engine; no network account or extra engine is needed.
-OpenSpiel
-owns legality, check, repetition and history, and the GameKit OpenSpiel adapter
+OpenSpiel owns legality, check, repetition and history, and the GameKit OpenSpiel adapter
 owns the computer's search; the application never re-implements a move.
 
 | Input | Action |
@@ -49,7 +51,7 @@ owns the computer's search; the application never re-implements a move.
 The opponent dialog changes sides when the backend is ready and never resets
 the match. Switching to a computer side makes it play the next turn it owns;
 switching difficulty affects the next search. Human moves, history and snapshot
-commands are unavailable until the current search finishes; theme, help and
+commands are unavailable until the reply has visibly landed; theme, help and
 closing remain responsive. Undo returns to the previous human decision point, including after
 a terminal move; before the computer's red opening has received a human reply,
 there is no human move to undo. Hot-seat play follows the side to move.
@@ -64,6 +66,31 @@ closing and reopening the match. Online multiplayer is not implemented.
 follows the frame's background mode, or set `light`/`dark` before calling
 `etaf-xiangqi-open`. Switching the palette at runtime repaints the board and
 never resets the match.
+
+## Following the computer's move
+
+Graphical boards move the actual stone smoothly from its origin to its target
+using ETAF's scoped `etaf-transition` and shared clock. A short move takes about
+0.25 seconds; longer moves take up to 0.45 seconds at the normal animation speed.
+The artwork updates only the retained cells whose image changes, not a separate
+Emacs frame or a replacement board. Captured stones stay visible until covered
+by the moving stone, then disappear when it lands.
+
+An amber dashed outline marks the origin and a solid outline marks the target.
+They remain until the next accepted move or a history/reset/load operation;
+selecting a stone takes visual precedence over its old move marker. The caption
+below the board names the moving side, piece and endpoints, plus a captured
+piece when present, for example `电脑：红炮 b2 → b9，吃黑馬`. Files `a`–`i` run
+left to right; ranks `9`–`0` run top to bottom. Cell accessibility labels also
+identify the computer's origin and destination.
+
+Terminal displays and `etaf-animation-enabled` set to nil retain the reading
+interval, endpoint marks and caption without interpolated movement. An already
+paused animation clock skips new move animations; pausing during a move holds
+its current position until resumed. Closing disposes the timer and animation
+scope. A backend reset, load, undo or error supersedes any pending presentation,
+so an old reply cannot reappear afterwards. These are presentation effects,
+not a second rule engine or extra backend turns; they are not saved in snapshots.
 
 The board is the primary surface, with compact controls above it. Legal moves
 are marked by dots (empty intersections) or rings (captures); **走法** opens
@@ -90,6 +117,8 @@ For GUI acceptance, load ETAF's `scripts/emacs-gui-verifier.el` and this
 application's `scripts/etaf-xiangqi-gui-scenarios.el` in a dedicated graphical
 Emacs, then run `etaf-xiangqi-gui-run` with a fresh evidence directory. It covers
 both themes, fixed metrics across viewport sizes, native keys, dialogs,
-history and switching to a computer opponent. Inspect the saved screenshots; functional assertions alone do not
-certify appearance. `benchmarks/performance-scenarios.el` registers selection,
+history and switching to a computer opponent. It captures a real in-flight
+move in both palettes using ETAF's public pause control, then resumes and
+checks the landed caption. Inspect the saved screenshots; functional assertions
+alone do not certify appearance. `benchmarks/performance-scenarios.el` registers selection,
 theme and resize workloads for the enclosing workspace's performance driver.
