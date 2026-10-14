@@ -151,7 +151,7 @@
                   presentation view (etaf-xiangqi--bot-arguments strength)))))))))
      :name "xiangqi-turn-policy"))
   :view
-  (flex :width '(vw 100) :height '(vh 100) :flex-direction 'column
+  (flex :width 'stretch :height 'stretch :flex-direction 'column
     :align-items (if (< (or (car (etaf-value viewport)) 0)
                        (* (frame-char-width) (+ 4 (* 9 (plist-get metrics :columns)))))
                      'flex-start 'center)
