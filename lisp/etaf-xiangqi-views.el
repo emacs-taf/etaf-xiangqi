@@ -108,7 +108,7 @@
                                   (plist-put (copy-sequence state) :moves nil)
                                 state))))
                         :test #'equal))
-             (selected (etaf-ref nil)) (help (etaf-ref nil)) (moves-open (etaf-ref nil))
+             (selected (etaf-ref nil)) (moves-open (etaf-ref nil))
              (settings (etaf-ref nil))
              (viewport (etaf-computed (lambda () (etaf-viewport)) :test #'equal))
              (compact (etaf-computed (lambda () (< (or (cdr (etaf-value viewport)) 44) 40)))))
@@ -152,6 +152,12 @@
      :name "xiangqi-turn-policy"))
   :view
   (flex :width 'stretch :height 'stretch :flex-direction 'column
+    :aria-label "中国象棋"
+    :help '("默认你执红先行，电脑执黑。电脑落子前至少留出 0.6 秒，再用动画移动棋子；虚线框是起点，实线框是落点，棋盘下方显示上一手。"
+            "点选棋子后，圆点标出合法目标，细环标出可吃的棋子。"
+            "人机对战里悔棋回到你上一个回合。帮助不暂停电脑思考或落子，关闭后继续当前棋局。"
+            "保存与读取使用本地文件，不自动覆盖棋局。"
+            "走法与胜负由 OpenSpiel Xiangqi 判定，电脑走子由 GameKit 的 OpenSpiel 适配器搜索。")
     :align-items (if (< (or (car (etaf-value viewport)) 0)
                        (* (frame-char-width) (+ 4 (* 9 (plist-get metrics :columns)))))
                      'flex-start 'center)
@@ -182,7 +188,7 @@
            (list "t" (lambda () (setf (etaf-value appearance)
                                       (if (eq (etaf-value appearance) 'dark) 'light 'dark))) "切换亮暗主题")
            (list "o" (lambda () (setf (etaf-value settings) t)) "对局设置")
-           (list "<f1>" (lambda () (setf (etaf-value help) t)) "规则")
+           (list "<f1>" #'etaf-help "规则")
            (list "q" (lambda () (etaf-xiangqi-close session)) "退出"))
     (box :flex-grow 2 :flex-basis '(lh 0) :min-height '(lh 0))
     (column :ref 'xiangqi-root :flex-shrink 0 :width (list 'ch (+ 4 (* 9 (plist-get metrics :columns))))
@@ -244,7 +250,7 @@
             :disabled (etaf-value blocked)
             :on-press (lambda () (setf (etaf-value moves-open) t)))
           (etaf-button :label "规则" :ref 'xiangqi-help :variant 'ghost
-            :on-press (lambda () (setf (etaf-value help) t)))
+            :on-press #'etaf-help)
           (etaf-button :label "设置" :ref 'xiangqi-settings :variant 'ghost
             :on-press (lambda () (setf (etaf-value settings) t)))))
       (etaf-alert :if (and (etaf-value ready)
@@ -297,15 +303,7 @@
               :disabled (null (etaf-value computer))
               :on-press (lambda () (setf (etaf-value level) 'hard))))
           (etaf-label :text "红方先行。换对手后轮到电脑时它会自动走子，难度从下一手开始生效。"
-            :variant 'muted :wrap-mode 'word)))
-      (etaf-dialog :open help :title "中国象棋 · 规则与操作" :width '(ch 58) :compact t
-        :on-close (lambda () (setf (etaf-value help) nil))
-        (column :item-gap '(lh 1)
-          (etaf-label :text "默认你执红先行，电脑执黑。电脑落子前至少留出 0.6 秒，再用动画移动棋子；虚线框是起点，实线框是落点，棋盘下方显示上一手。" :wrap-mode 'word)
-          (etaf-label :text "点选棋子后，圆点标出合法目标，细环标出可吃的棋子。方向键移动棋盘光标，Enter 选中或落子。" :wrap-mode 'word)
-          (etaf-label :text "U 悔棋，Y 重做，N 新局，O 对局设置，T 主题，Q 退出。人机对战里悔棋回到你上一个回合。" :wrap-mode 'word)
-          (etaf-label :text "Tab 切换控件，Escape 取消选择或关闭弹窗。保存与读取使用本地文件，不自动覆盖棋局。" :wrap-mode 'word)
-          (etaf-label :text "走法与胜负由 OpenSpiel Xiangqi 判定，电脑走子由 GameKit 的 OpenSpiel 适配器搜索。" :wrap-mode 'word))))
+            :variant 'muted :wrap-mode 'word))))
     (box :flex-grow 3 :flex-basis '(lh 0) :min-height '(lh 0))))
 
 (defun etaf-xiangqi--view (session)

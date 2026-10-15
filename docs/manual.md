@@ -45,8 +45,16 @@ owns the computer's search; the application never re-implements a move.
 | O / Opponent | Choose the opponent and difficulty for the running match |
 | C-s / C-o | Save or load an explicit local snapshot |
 | T / Light–Dark | Switch between the paper and night palettes |
-| F1 / Help | Open the rules dialog |
+| ? / F1 / 规则 | Open searchable rules and effective controls in the current buffer |
 | Q | Close the match |
+
+Help is a read-only modal in the match buffer, without splitting the window or
+opening another application. Wide windows use two columns; narrow ones use a
+scrolling column. `/` starts search; Escape leaves editing first, then closes
+help without clearing a selected stone. Clicking the shade also closes it
+without activating the board. Help does not pause computer search or the
+presentation of its reply. The **可走位置** and **对局设置** dialogs also close from
+their shades; help opened over either dismisses only its own top layer.
 
 The opponent dialog changes sides when the backend is ready and never resets
 the match. Switching to a computer side makes it play the next turn it owns;

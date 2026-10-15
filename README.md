@@ -81,7 +81,7 @@ window; it accepts an optional integer seed for a reproducible opening.
 | `O` or 设置 | Choose the opponent (hot-seat, computer sides) and difficulty |
 | `C-s` / `C-o` | Save or load an explicit local snapshot |
 | `T` or Light–Dark | Switch between the paper and night palettes |
-| `F1` or Help | Open the rules dialog |
+| `?`, `F1` or 规则 | Open searchable rules and effective controls in the current buffer |
 | `Q` | Close the match |
 
 Red (bottom) moves first. `etaf-xiangqi-opponent` chooses who plays which side

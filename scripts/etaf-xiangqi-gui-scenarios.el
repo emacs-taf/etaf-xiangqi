@@ -106,8 +106,8 @@ focus. Dispose the owned match and restore frame geometry even after failure."
                                           (= (etaf-gamekit-view session :player) 1))) t)
               (key-action "undo" "u" (lambda () (= (etaf-gamekit-view session :action_count) 0)))
               (key-action "redo" "y" (lambda () (= (etaf-gamekit-view session :action_count) 1)))
-              (key-action "help" "<f1>" (lambda () (string-match-p "规则与操作" (text))) t)
-              (key-action "close-help" "<escape>" (lambda () (not (string-match-p "规则与操作" (text)))))
+              (key-action "help" "<f1>" (lambda () (string-match-p "快捷键 · 只读" (text))) t)
+              (key-action "close-help" "<escape>" (lambda () (not (string-match-p "快捷键 · 只读" (text)))))
               (key-action "new-match" "n" (lambda () (= (etaf-gamekit-view session :action_count) 0)))
               (etaf-gui-verifier-action-create
                :id "legal-moves" :screenshot t
