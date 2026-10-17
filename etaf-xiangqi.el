@@ -2,7 +2,7 @@
 ;;; etaf-xiangqi.el --- Chinese chess (Xiangqi), a standalone GameKit application
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "29.1") (etaf-gamekit "0.1.0") (etaf-ui "0.1.0"))
 ;;; Commentary:
 ;; Chu He presents OpenSpiel's xiangqi rules on a native ETAF board with both
@@ -47,6 +47,11 @@
 ;; Return the reactive View for SESSION, suitable for embedding in a host such
 ;; as an etaf-desktop window. The caller owns SESSION's display and lifecycle.
 ;;
+;; Function: etaf-xiangqi-doctor ()
+;; Return capability facts for playing xiangqi.  The shape matches
+;; `etaf-install-doctor': the rules engine comes from `etaf-gamekit', which is an
+;; ordinary package dependency, while the OpenSpiel runtime is a local build
+;; that must be detected before a game can start.
 ;; Function: etaf-xiangqi-open (&optional seed)
 ;;;###autoload (autoload 'etaf-xiangqi-open "etaf-xiangqi" nil t)
 ;; Open and display an independent match; return its GameKit instance. SEED is
@@ -64,6 +69,17 @@
 ;;
 ;;; Code:
 (require 'etaf-gamekit)
+
+(defun etaf-xiangqi-doctor ()
+  "Return capability facts for playing xiangqi.
+The shape matches `etaf-install-doctor': :required and :optional lists of
+(LABEL AVAILABLE REMEDY).  Nothing is installed or changed."
+  (list :required
+        (list (list "OpenSpiel runtime"
+                    (file-directory-p (expand-file-name "~/.cache/emacs-taf/game-engines/openspiel"))
+                    "Build it once with: make -C etaf-gamekit engine-openspiel GAMEKIT_PYTHON=python3"))
+        :optional nil))
+
 (require 'etaf-ui)
 (defgroup etaf-xiangqi nil "Chu He xiangqi." :group 'games)
 (defcustom etaf-xiangqi-appearance 'auto
