@@ -2,7 +2,7 @@
 ;;; etaf-xiangqi.el --- Chinese chess (Xiangqi), a standalone GameKit application
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "29.1") (etaf-gamekit "0.1.0") (etaf-ui "0.1.0"))
 ;;; Commentary:
 ;; Chu He presents OpenSpiel's xiangqi rules on a native ETAF board with both
@@ -94,6 +94,16 @@ The shape matches `etaf-install-doctor': :required and :optional lists of
   :type '(choice (const easy) (const normal) (const hard)) :group 'etaf-xiangqi)
 (defconst etaf-xiangqi--directory
   (file-name-directory (or load-file-name buffer-file-name)))
+;; Installed archives compile each module separately, so `lisp' must be on
+;; `load-path' while the byte compiler runs, not only when this entry loads.
+;;;###autoload
+(eval-and-compile
+  (add-to-list 'load-path
+               (expand-file-name "lisp"
+                                 (file-name-directory
+                                  (or load-file-name
+                                      (bound-and-true-p byte-compile-current-file)
+                                      buffer-file-name)))))
 (let ((load-path (cons (expand-file-name "lisp" etaf-xiangqi--directory) load-path)))
   (require 'etaf-xiangqi-theme)
   (require 'etaf-xiangqi-model)
