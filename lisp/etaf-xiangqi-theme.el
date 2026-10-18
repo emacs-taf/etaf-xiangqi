@@ -23,18 +23,18 @@
   "Light paper table, engraved lines and ivory pieces.")
 
 (defconst etaf-xiangqi--dark-theme
-  '(:ui-bg "#161D24" :ui-fg "#E6ECEB" :ui-muted-fg "#8E9DA2"
-    :ui-panel-bg "#202B34" :ui-panel-fg "#E6ECEB" :ui-panel-border "#35434C"
-    :ui-border "#35434C" :ui-accent "#DD8272" :ui-accent-fg "#241715"
+  '(:ui-bg "#191a1c" :ui-fg "#E6ECEB" :ui-muted-fg "#8E9DA2"
+    :ui-panel-bg "#202225" :ui-panel-fg "#E6ECEB" :ui-panel-border "#303338"
+    :ui-border "#303338" :ui-accent "#DD8272" :ui-accent-fg "#241715"
     :ui-button-primary-bg "#DD8272" :ui-button-primary-fg "#241715"
     :ui-button-secondary-bg "#2C4143" :ui-button-secondary-fg "#BAD7CE"
-    :ui-button-ghost-fg "#BAC9CA" :ui-disabled-bg "#202B34" :ui-disabled-fg "#62767B"
-    :ui-disabled-border "#35434C" :ui-divider-bg "#35434C"
+    :ui-button-ghost-fg "#BAC9CA" :ui-disabled-bg "#202225" :ui-disabled-fg "#62767B"
+    :ui-disabled-border "#303338" :ui-divider-bg "#303338"
     :ui-info-bg "#283B43" :ui-info-fg "#ACCED7" :ui-info-border "#3A5661"
     :ui-success-bg "#263C32" :ui-success-fg "#A1D5B6" :ui-success-border "#3D5B49"
     :ui-warning-bg "#3E382C" :ui-warning-fg "#DEC58A" :ui-warning-border "#5C5138"
     :ui-danger-bg "#422C32" :ui-danger-fg "#EEA2AD" :ui-danger-border "#67404A"
-    :ui-progress-track "#35434C"
+    :ui-progress-track "#303338"
     :xq-paper "#24343E" :xq-line "#6C8288" :xq-edge "#506B73"
     :xq-river "#90A5AA" :xq-piece "#EAE1CE" :xq-shadow "#061117"
     :xq-red "#AC382F" :xq-black "#2D414B" :xq-accent "#79CDB8")
