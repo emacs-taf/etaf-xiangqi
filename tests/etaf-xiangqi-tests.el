@@ -502,5 +502,44 @@ inside `etaf-gamekit-start'."
           (should-not (string-match-p "被将军" (etaf-xiangqi-test--text session))))
       (etaf-xiangqi-test--close session))))
 
+(ert-deftest etaf-xiangqi-hosted-session-renders-in-its-host ()
+  "A session prepared for a host mounts nothing itself and repaints there."
+  (let* ((session (etaf-xiangqi-create 11))
+         (host (generate-new-buffer " *xiangqi host*")))
+    (unwind-protect
+        (progn
+          ;; The session owns state only: its own buffer stays unmounted, so
+          ;; the host is the single rendering of this match.
+          (should-not (etaf-runtime-for-buffer (etaf-gamekit-buffer session)))
+          (etaf-mount host (etaf-xiangqi-view session))
+          (let ((runtime (etaf-runtime-for-buffer host))
+                (deadline (+ (float-time) 8)))
+            (etaf-runtime-refit runtime 1100 44)
+            (while (and (< (float-time) deadline)
+                        (or (not (eq (etaf-gamekit-status session) 'ready))
+                            (not (etaf-host-ref-size runtime 'xiangqi-board))))
+              (accept-process-output nil 0.01)
+              (etaf-runtime-flush runtime))
+            (should (eq (etaf-gamekit-status session) 'ready))
+            (let ((before (with-current-buffer host
+                            (buffer-substring-no-properties (point-min) (point-max)))))
+              (etaf-dispatch-event runtime 'xiangqi-cell-6-4 'press)
+              (etaf-dispatch-event runtime 'xiangqi-cell-5-4 'press)
+              ;; The computer's reply has to reach the host's own buffer.
+              (while (and (< (float-time) deadline)
+                          (not (= 2 (or (etaf-gamekit-view session :action_count) 0))))
+                (accept-process-output nil 0.01)
+                (when-let* ((live (etaf-runtime-for-buffer host)))
+                  (etaf-runtime-flush live)))
+              (should (= 2 (etaf-gamekit-view session :action_count)))
+              (should-not (equal before
+                                 (with-current-buffer host
+                                   (buffer-substring-no-properties
+                                    (point-min) (point-max))))))))
+      (when-let* ((runtime (etaf-runtime-for-buffer host)))
+        (etaf-unmount runtime))
+      (kill-buffer host)
+      (etaf-xiangqi-test--close session))))
+
 (provide 'etaf-xiangqi-tests)
 ;;; etaf-xiangqi-tests.el ends here

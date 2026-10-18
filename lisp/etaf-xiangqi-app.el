@@ -18,18 +18,20 @@
   :view #'etaf-xiangqi--view)
 
 (defun etaf-xiangqi-create (&optional seed)
-  "Return a session for etaf-xiangqi-view without displaying it.
+  "Return a session whose one host renders it through `etaf-xiangqi-view'.
 
-SEED is an optional integer.  The caller owns the session's display and
-lifecycle; release it with `etaf-gamekit-close'."
-  (etaf-gamekit-start etaf-xiangqi-game
+SEED is an optional integer.  The session owns the match and its backend
+process but mounts no presentation of its own, so a desktop window (or any
+other single host) stays the only rendering of this match; `etaf-xiangqi-open'
+displays it in its own buffer instead.  Release it with `etaf-gamekit-close'."
+  (etaf-gamekit-start etaf-xiangqi-game :display nil
                       :options (list :seed (or seed (random most-positive-fixnum)))))
 
 (defun etaf-xiangqi-open (&optional seed)
   "Display an independent match with optional integer SEED and return its instance."
   (interactive)
   (let* ((session (etaf-xiangqi-create seed))
-         (buffer (etaf-gamekit-buffer session)))
+         (buffer (etaf-gamekit-display session)))
     (with-current-buffer buffer
       (setq-local etaf-xiangqi--session session cursor-type nil mode-line-format nil
                   truncate-lines t

@@ -37,10 +37,12 @@
 ;;
 ;; Function: etaf-xiangqi-create (&optional seed)
 ;;;###autoload (autoload 'etaf-xiangqi-create "etaf-xiangqi" nil t)
-;; Create and return an independent GameKit session without displaying it.
+;; Create an independent match whose single host renders it.
 ;; SEED is an optional integer; omitted creates a fresh random opening. The
-;; caller owns display and lifecycle; pass the result to etaf-xiangqi-view and
-;; release it with etaf-gamekit-close.
+;; session owns state and the backend process but mounts no presentation of its
+;; own, so the caller's one view (etaf-xiangqi-view) is the only rendering;
+;; etaf-xiangqi-open displays it in its own buffer instead. Release the session
+;; with etaf-gamekit-close.
 ;;
 ;; Function: etaf-xiangqi-view (session)
 ;;;###autoload (autoload 'etaf-xiangqi-view "etaf-xiangqi" nil t)
