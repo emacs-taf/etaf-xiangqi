@@ -107,6 +107,18 @@ jade ring identifies the selected stone; a dotted ring identifies keyboard
 focus. Arrow keys move focus, Enter selects or moves, and Escape first closes
 an open dialog, then clears selection on the next press.
 
+## Reading a check
+
+The side to move being checked comes from the same observation the board draws:
+the status line appends 被将军 in the palette's danger colour and the general's
+intersection carries a danger frame, so a position that restricts almost every
+stone explains itself. Pressing a stone with no legal target then says why in
+the caption below the board — `红傌 解不了将` while checked, otherwise
+`红傌 本回合没有合法走法` — and **走法** titles its list 被将军：只有解将的招法.
+The warning clears as soon as any accepted move answers the check. It only
+describes the public position; the engine still decides which stones may move
+and how the match ends.
+
 Graphical Emacs with SVG support renders an intersection lattice, river and
 palaces with circular ivory stones. Each intersection is a native ETAF tile,
 not a screenshot with a separate hit-testing overlay. The image Host divides

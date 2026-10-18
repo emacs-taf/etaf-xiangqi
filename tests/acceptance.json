@@ -2,11 +2,11 @@
   "schema": 1,
   "load_path": [
     ".",
-    "../../etaf-gamekit",
-    "../../etaf-ui",
-    "../../etaf",
-    "../../ebox",
-    "../../ecss"
+    "../etaf-gamekit",
+    "../etaf-ui",
+    "../etaf",
+    "../ebox",
+    "../ecss"
   ],
   "support": [],
   "cases": [
@@ -69,6 +69,11 @@
       "name": "etaf-xiangqi-hot-seat-moves-and-undo-restores",
       "file": "tests/etaf-xiangqi-tests.el",
       "purpose": "Red and black alternate through the public board and undo restores the opening."
+    },
+    {
+      "name": "etaf-xiangqi-check-is-announced-and-explains-an-immobile-stone",
+      "file": "tests/etaf-xiangqi-tests.el",
+      "purpose": "A non-terminal check names itself in the status line, a stone that cannot answer it explains why, and an interposing move still resolves it."
     },
     {
       "name": "etaf-xiangqi-invalid-action-preserves-the-board",

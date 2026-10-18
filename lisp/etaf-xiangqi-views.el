@@ -47,7 +47,11 @@
                            all))) :test #'equal)))
   :view
   (column :width 'stretch :item-gap '(lh 1)
-    (etaf-label :text (if (etaf-value selected) "这枚棋子的可走位置" "本回合的合法走法") :variant 'strong)
+    (etaf-label :text (cond ((etaf-value selected) "这枚棋子的可走位置")
+                            ((and (etaf-value table) (etaf-xiangqi--check (etaf-value table)))
+                             "被将军：只有解将的招法")
+                            (t "本回合的合法走法"))
+      :variant 'strong)
     (column :height '(lh 12) :overflow 'scroll :width 'stretch
       (etaf-button :for (move (etaf-value moves)) :key (plist-get move :id)
         :ref (intern (format "xiangqi-move-%d" (plist-get move :id)))
@@ -59,7 +63,11 @@
         :on-press (lambda ()
                     (etaf-xiangqi--send session selected "act" (list :action (plist-get move :id)))
                     (when on-chosen (funcall on-chosen)))))
-    (etaf-label :if (null (etaf-value moves)) :text "当前没有可用走法。" :variant 'muted)))
+    (etaf-label :if (null (etaf-value moves))
+      :text (if (and (etaf-value selected) (etaf-value table)
+                     (etaf-xiangqi--check (etaf-value table)))
+                "这枚棋子解不了将。" "当前没有可用走法。")
+      :variant 'muted)))
 
 (etaf-define-component etaf-xiangqi--app (&key session)
   :bindings ((appearance (etaf-ref (if (eq etaf-xiangqi-appearance 'auto)
@@ -75,6 +83,9 @@
              (last-move (etaf-xiangqi--presentation-last presentation))
              (motion (etaf-xiangqi--presentation-motion presentation))
              (table (etaf-computed (lambda () (etaf-xiangqi--table (etaf-value shown))) :test #'equal))
+             (check (etaf-computed (lambda () (when-let* ((state (etaf-value table)))
+                                                (etaf-xiangqi--check state)))
+                                   :test #'equal))
              (opponent (etaf-ref etaf-xiangqi-opponent))
              (level (etaf-ref etaf-xiangqi-level))
              (computer (etaf-computed
@@ -108,13 +119,15 @@
                                   (plist-put (copy-sequence state) :moves nil)
                                 state))))
                         :test #'equal))
-             (selected (etaf-ref nil)) (moves-open (etaf-ref nil))
+             (selected (etaf-ref nil)) (moves-open (etaf-ref nil)) (hint (etaf-ref nil))
              (settings (etaf-ref nil))
              (viewport (etaf-computed (lambda () (etaf-viewport)) :test #'equal))
              (compact (etaf-computed (lambda () (< (or (cdr (etaf-value viewport)) 44) 40)))))
   :setup
   (progn
     (etaf-theme-provide theme)
+    ;; A reason for the last refused press describes one position only.
+    (etaf-watch table (lambda (_state _old) (setf (etaf-value hint) nil)) :flush 'post)
     ;; Emacs keeps automatic horizontal scrolling after a tiny window grows.
     ;; Restore the whole table only when it fits; never change the focused cell.
     (etaf-watch viewport
@@ -155,6 +168,7 @@
     :aria-label "中国象棋"
     :help '("默认你执红先行，电脑执黑。电脑落子前至少留出 0.6 秒，再用动画移动棋子；虚线框是起点，实线框是落点，棋盘下方显示上一手。"
             "点选棋子后，圆点标出合法目标，细环标出可吃的棋子。"
+            "帅正被将军时用警示色框出，只能走解将的招法；点不能动的棋子会说明原因。"
             "人机对战里悔棋回到你上一个回合。帮助不暂停电脑思考或落子，关闭后继续当前棋局。"
             "保存与读取使用本地文件，不自动覆盖棋局。"
             "走法与胜负由 OpenSpiel Xiangqi 判定，电脑走子由 GameKit 的 OpenSpiel 适配器搜索。")
@@ -197,9 +211,12 @@
       (flex :width 'stretch :justify-content 'space-between :align-items 'center
         (etaf-label :text "中国象棋" :variant 'strong)
         (etaf-label :ref 'xiangqi-status
-          :text (etaf-xiangqi--turn-text (etaf-value table) (etaf-value computer)
-                                         (etaf-gamekit-last-error session) (etaf-value phase))
-          :color (etaf-xiangqi--color :ui-accent)))
+          :text (concat (etaf-xiangqi--turn-text (etaf-value table) (etaf-value computer)
+                                                 (etaf-gamekit-last-error session) (etaf-value phase))
+                        (if (and (etaf-value check) (not (etaf-value blocked)))
+                            " · 被将军" ""))
+          :color (etaf-xiangqi--color (if (and (etaf-value check) (not (etaf-value blocked)))
+                                         :ui-danger-fg :ui-accent))))
       (flex :width 'stretch :justify-content 'space-between :align-items 'center
         :region '(:id xiangqi-controls :label "对局操作" :key "a" :enter xiangqi-new)
         (row :item-gap '(ch 1)
@@ -229,12 +246,14 @@
           (etaf-xiangqi--theme-switch :appearance appearance)))
       (etaf-label :if (null (etaf-value table)) :text "正在开局…" :variant 'muted)
       (etaf-xiangqi--board :if (etaf-value table) :session session :table playable
-        :selected selected :palette theme :metrics metrics :motion motion :last-move last-move)
+        :selected selected :palette theme :metrics metrics :motion motion :last-move last-move
+        :check check :hint hint)
       (etaf-label :ref 'xiangqi-selection
         :text (if-let* ((coord (etaf-value selected)))
                   (format "已选 %s · 点击圆点落子"
                           (etaf-xiangqi--name (etaf-xiangqi--cell (etaf-value table) (car coord) (cdr coord))))
-                (cond ((etaf-value motion)
+                (cond ((etaf-value hint) (etaf-value hint))
+                      ((etaf-value motion)
                        (etaf-xiangqi--move-description (plist-get (etaf-value motion) :move)))
                       ((etaf-value last-move)
                        (etaf-xiangqi--move-description (etaf-value last-move)))

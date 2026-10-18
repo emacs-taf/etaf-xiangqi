@@ -8,8 +8,8 @@
 ;; Chu He presents OpenSpiel's xiangqi rules on a native ETAF board with both
 ;; palettes and a computer opponent. Graphical displays use vector
 ;; intersections and circular stones; terminals keep text cells. Artwork,
-;; selection and move hints are presentation only; legality and history stay
-;; in OpenSpiel, and its adapter supplies the opponent's search.
+;; selection, move hints and the check warning are presentation only; legality
+;; and history stay in OpenSpiel, and its adapter supplies the opponent's search.
 ;;
 ;; Variable: etaf-xiangqi-game
 ;; Inert game definition usable with etaf-gamekit-start. Each instance owns an

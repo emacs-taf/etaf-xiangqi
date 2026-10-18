@@ -27,6 +27,9 @@ move.
   naming the move and any capture. Search still runs immediately in the backend.
 - Hot-seat play in one window; after every accepted move the view switches to
   the side to move.
+- A check that explains itself: the status line says 被将军, the general carries a
+  danger frame, and pressing a stone that cannot answer the check says so in the
+  caption instead of doing nothing.
 - Paper and night palettes; switching the theme never resets the match.
 - Undo and redo that restore the turn (against the computer, one step restores
   your own last round), and explicit local snapshots through `C-s` and `C-o`.

@@ -114,14 +114,15 @@ discarding the artwork that is still being shown."
                        :font-family "Songti SC,STSong,Noto Serif CJK SC,serif"
                        :font-weight 600 :font-size (* radius 1.24) :text-anchor "middle" :fill ink))))
 
-(defun etaf-xiangqi--cell-art (cache palette metrics row column piece selected target focused &optional marker sprite)
+(defun etaf-xiangqi--cell-art (cache palette metrics row column piece selected target focused checked &optional marker sprite)
   "Return cached vector artwork for one interactive intersection.
 CACHE is instance-owned and bounded. PALETTE and METRICS are presentation
-values; PIECE, SELECTED, TARGET and FOCUSED never alter the native match.
+values; PIECE, SELECTED, TARGET, FOCUSED and CHECKED never alter the match.
 MARKER is from/to for the previous move.  SPRITE is (PIECE X Y), clipped into
 this cell's SVG viewport; it never changes tile geometry or activation."
   (let* ((width (plist-get metrics :width)) (height (plist-get metrics :height))
-         (key (list palette width height row column piece selected target focused marker sprite)))
+         (key (list palette width height row column piece selected target focused checked
+                    marker sprite)))
     (or (etaf-xiangqi--cache-get cache key)
         (let* ((base-key (list 'board palette width height))
                (parts (or (etaf-xiangqi--cache-get cache base-key)
@@ -140,6 +141,13 @@ this cell's SVG viewport; it never changes tile geometry or activation."
                                 :rx 5 :fill "none" :stroke (plist-get palette :ui-warning-fg)
                                 :stroke-width (if (eq marker 'to) 2 1.4)
                                 :stroke-dasharray (when (eq marker 'from) "3 3")))))
+          (when checked
+            (setq body (concat body
+                               (etaf-ui-svg-rect
+                                (+ (* column width) 3) (+ (* row height) 3)
+                                (- width 6) (- height 6)
+                                :rx 5 :fill "none" :stroke (plist-get palette :ui-danger-fg)
+                                :stroke-width 2))))
           (when (or focused selected)
             (setq body (concat body
                                (etaf-ui-svg-circle x y (+ radius 3)
@@ -185,7 +193,7 @@ this cell's SVG viewport; it never changes tile geometry or activation."
                  (< (abs (- y (* height (+ row .5)))) height))
         (list (plist-get move :piece) x y)))))
 
-(etaf-define-component etaf-xiangqi--board (&key session table selected palette metrics motion last-move)
+(etaf-define-component etaf-xiangqi--board (&key session table selected palette metrics motion last-move check hint)
   :bindings ((cache (cons (make-hash-table :test #'equal) (make-hash-table :test #'equal))) (cursor (etaf-ref nil)))
   :view
   (etaf-tile-grid :ref 'xiangqi-board :rows 10 :columns 9
@@ -203,7 +211,8 @@ this cell's SVG viewport; it never changes tile geometry or activation."
           (etaf-xiangqi--cell-art
            cache (etaf-value palette) metrics r c piece
            (equal position chosen) (and (etaf-xiangqi--move state chosen position) t)
-           (equal position (etaf-value cursor)) (etaf-xiangqi--move-marker move position)
+           (equal position (etaf-value cursor)) (equal position (etaf-value check))
+           (etaf-xiangqi--move-marker move position)
            (etaf-xiangqi--moving-stone moving metrics r c)))))
     :cell-text (lambda (r c) (or (etaf-xiangqi--glyph (etaf-xiangqi--cell (etaf-value table) r c)) "·"))
     :cell-background (lambda (r c)
@@ -221,10 +230,11 @@ this cell's SVG viewport; it never changes tile geometry or activation."
                           (+ ?a c) (- 9 r) (1+ r) (1+ c)
                           (concat
                            (if (etaf-xiangqi--move (etaf-value table) (etaf-value selected) (cons r c)) " · 可走" "")
+                           (if (equal (cons r c) (etaf-value check)) " · 被将军" "")
                            (pcase (etaf-xiangqi--move-marker (etaf-value last-move) (cons r c))
                              ('from " · 电脑起点") ('to " · 电脑落点") (_ "")))))
     :on-cell-focus (lambda (r c) (setf (etaf-value cursor) (cons r c)))
-    :on-cell-press (lambda (r c) (etaf-xiangqi--press session selected (etaf-value table) (cons r c)))))
+    :on-cell-press (lambda (r c) (etaf-xiangqi--press session selected (etaf-value table) (cons r c) hint))))
 
 (provide 'etaf-xiangqi-board)
 ;;; etaf-xiangqi-board.el ends here

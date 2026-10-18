@@ -3,6 +3,7 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;; Code:
 (require 'ert)
+(require 'cl-lib)
 (require 'etaf-xiangqi)
 
 (defun etaf-xiangqi-test--wait (session &optional predicate failure)
@@ -469,6 +470,36 @@ inside `etaf-gamekit-start'."
             (should (> elapsed 0.6))
             (etaf-xiangqi-test--wait session)
             (should (< (- (float-time) replied) 0.3))))
+      (etaf-xiangqi-test--close session))))
+
+(defun etaf-xiangqi-test--press (runtime from to)
+  "Press FROM and then TO on RUNTIME's board."
+  (etaf-dispatch-event runtime (intern (format "xiangqi-cell-%d-%d" (car from) (cdr from))) 'press)
+  (etaf-dispatch-event runtime (intern (format "xiangqi-cell-%d-%d" (car to) (cdr to))) 'press))
+
+(ert-deftest etaf-xiangqi-check-is-announced-and-explains-an-immobile-stone ()
+  "A checked side learns why most stones cannot move, and can still answer."
+  (let ((session (etaf-xiangqi-test--start 11 'hot-seat)))
+    (unwind-protect
+        (let* ((runtime (etaf-runtime-for-buffer (etaf-gamekit-buffer session)))
+               (moves '(((7 . 1) (0 . 1)) ((0 . 0) (0 . 1)) ((7 . 7) (0 . 7))
+                        ((0 . 8) (0 . 7)) ((9 . 1) (7 . 2)) ((2 . 1) (2 . 4))
+                        ((6 . 2) (5 . 2)) ((3 . 4) (4 . 4)) ((6 . 4) (5 . 4))
+                        ((4 . 4) (5 . 4)))))
+          ;; Black's cannon on e7 aims at the red general through the soldier
+          ;; that lands on e4, so the last position is check.
+          (cl-loop for (from to) in moves for ply from 1
+                   do (etaf-xiangqi-test--press runtime from to)
+                   do (etaf-xiangqi-test--wait
+                       session (lambda () (= ply (etaf-gamekit-view session :action_count)))))
+          (should (string-match-p "被将军" (etaf-xiangqi-test--text session)))
+          ;; The right-hand horse cannot reach the checking line.
+          (etaf-dispatch-event runtime 'xiangqi-cell-9-7 'press)
+          (should (string-match-p "解不了将" (etaf-xiangqi-test--text session)))
+          ;; An advisor that interposes on e1 answers the check.
+          (etaf-xiangqi-test--press runtime (cons 9 3) (cons 8 4))
+          (etaf-xiangqi-test--wait session (lambda () (= 11 (etaf-gamekit-view session :action_count))))
+          (should-not (string-match-p "被将军" (etaf-xiangqi-test--text session))))
       (etaf-xiangqi-test--close session))))
 
 (provide 'etaf-xiangqi-tests)
