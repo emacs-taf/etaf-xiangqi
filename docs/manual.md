@@ -9,7 +9,7 @@ Install GameKit, ETAF, etaf-ui and GameKit's OpenSpiel runtime, then add the
 application directory to `load-path`:
 
 ```elisp
-(add-to-list 'load-path "/path/to/etaf-games/etaf-xiangqi")
+(add-to-list 'load-path "/path/to/emacs-taf/etaf-xiangqi")
 (require 'etaf-xiangqi)
 (etaf-xiangqi-open)
 ```
