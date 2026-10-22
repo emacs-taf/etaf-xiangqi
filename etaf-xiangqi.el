@@ -3,7 +3,7 @@
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;; Version: 0.1.4
-;; Package-Requires: ((emacs "29.1") (etaf-gamekit "0.1.0") (etaf-ui "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (etaf "0.3.0") (etaf-gamekit "0.1.0") (etaf-ui "0.1.0"))
 ;;; Commentary:
 ;; Chu He presents OpenSpiel's xiangqi rules on a native ETAF board with both
 ;; palettes and a computer opponent. Graphical displays use vector
