@@ -31,12 +31,12 @@
       (format "人机对战 · 你执%s" (if (eq computer 'black) "红" "黑"))
     "同机双人"))
 
-(etaf-define-component etaf-xiangqi--theme-switch (&key appearance)
+(etaf-define-component etaf-xiangqi--theme-switch (&key appearance override)
   :view
   (etaf-button :label (if (eq (etaf-value appearance) 'dark) "浅色" "暗色")
     :ref 'xiangqi-theme :variant 'ghost :help-echo "切换亮暗主题 · T"
-    :on-press (lambda () (setf (etaf-value appearance)
-                              (if (eq (etaf-value appearance) 'dark) 'light 'dark)))))
+    :on-press (lambda () (etaf-set-value override
+                                        (if (eq (etaf-value appearance) 'dark) 'light 'dark)))))
 
 (etaf-define-component etaf-xiangqi--moves (&key session table selected on-chosen)
   :bindings ((moves (etaf-computed
@@ -70,9 +70,14 @@
       :variant 'muted)))
 
 (etaf-define-component etaf-xiangqi--app (&key session)
-  :bindings ((appearance (etaf-ref (if (eq etaf-xiangqi-appearance 'auto)
-                                      (if (eq (frame-parameter nil 'background-mode) 'dark) 'dark 'light)
-                                    etaf-xiangqi-appearance)))
+  :bindings ((appearance-override (etaf-ref nil))
+             (appearance (etaf-computed
+                          (lambda ()
+                            (or (etaf-value appearance-override)
+                                (if (eq etaf-xiangqi-appearance 'auto)
+                                    (etaf-appearance)
+                                  etaf-xiangqi-appearance)))
+                          :test #'eq))
              (theme (etaf-computed (lambda () (if (eq (etaf-value appearance) 'dark)
                                                  etaf-xiangqi--dark-theme etaf-xiangqi--light-theme)) :test #'equal))
              (metrics (etaf-xiangqi--board-metrics))
@@ -199,8 +204,8 @@
                                     (etaf-xiangqi--snapshot session selected "save"))) "保存")
            (list "C-o" (lambda () (when (etaf-value ready)
                                     (etaf-xiangqi--snapshot session selected "load"))) "读取")
-           (list "t" (lambda () (setf (etaf-value appearance)
-                                      (if (eq (etaf-value appearance) 'dark) 'light 'dark))) "切换亮暗主题")
+           (list "t" (lambda () (etaf-set-value appearance-override
+                                               (if (eq (etaf-value appearance) 'dark) 'light 'dark))) "切换亮暗主题")
            (list "o" (lambda () (setf (etaf-value settings) t)) "对局设置")
            (list "<f1>" #'etaf-help "规则")
            (list "q" (lambda () (etaf-xiangqi-close session)) "退出"))
@@ -243,7 +248,8 @@
           (etaf-button :label "读取" :ref 'xiangqi-load :variant 'ghost
             :disabled (not (etaf-value ready))
             :on-press (lambda () (etaf-xiangqi--snapshot session selected "load")))
-          (etaf-xiangqi--theme-switch :appearance appearance)))
+          (etaf-xiangqi--theme-switch :appearance appearance
+                                      :override appearance-override)))
       (etaf-label :if (null (etaf-value table)) :text "正在开局…" :variant 'muted)
       (etaf-xiangqi--board :if (etaf-value table) :session session :table playable
         :selected selected :palette theme :metrics metrics :motion motion :last-move last-move
