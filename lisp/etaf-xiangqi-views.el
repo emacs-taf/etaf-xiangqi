@@ -70,14 +70,9 @@
       :variant 'muted)))
 
 (etaf-define-component etaf-xiangqi--app (&key session)
-  :bindings ((appearance-override (etaf-ref nil))
-             (appearance (etaf-computed
-                          (lambda ()
-                            (or (etaf-value appearance-override)
-                                (if (eq etaf-xiangqi-appearance 'auto)
-                                    (etaf-appearance)
-                                  etaf-xiangqi-appearance)))
-                          :test #'eq))
+  :bindings ((appearance-override (etaf-ref (unless (eq etaf-xiangqi-appearance 'auto)
+                                              etaf-xiangqi-appearance)))
+             (appearance (etaf-appearance-mode appearance-override))
              (theme (etaf-computed (lambda () (if (eq (etaf-value appearance) 'dark)
                                                  etaf-xiangqi--dark-theme etaf-xiangqi--light-theme)) :test #'equal))
              (metrics (etaf-xiangqi--board-metrics))
